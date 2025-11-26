@@ -102,6 +102,9 @@
 </div>
 
 <script>
+
+let commandHistory = [];
+let historyIndex = -1;
 /* -------------------------------
    DATABASE SIMULADO
 -------------------------------- */
@@ -244,6 +247,9 @@ function handleCommand(raw) {
     const lower = cmd.toLowerCase();
     if (!cmd) return;
 
+    commandHistory.push(cmd);
+    historyIndex = commandHistory.length;
+
     print("cmd", "/" + cmd);
 
     /* OPEN - 2 modos:
@@ -301,8 +307,8 @@ if (lower.startsWith("open ")) {
         print("out", "users                   - Lista usuários");
         print("out", "login user senha        - Autenticação");
         print("out", "files                   - Lista arquivos (requer login)");
-        print("out", "open 'pasta'            - Abre diretório (requer login)");
-        print("out", "open 'pasta' 'arquivo'  - Abre diretório (requer login)");
+        print("out", "open [pasta]            - Abre diretório (requer login)");
+        print("out", "open [pasta] [arquivo]  - Abre diretório (requer login)");
         print("out", "logout                  - Encerrar sessão");
         print("out", "");
         return;
@@ -417,12 +423,36 @@ if (lower.startsWith("open ")) {
    INPUT
 -------------------------------- */
 input.addEventListener("keydown", e => {
+    // ENTER executa
     if (e.key === "Enter") {
         const value = input.value;
         input.value = "";
         handleCommand(value);
+        return;
+    }
+
+    // seta para cima (voltar histórico)
+    if (e.key === "ArrowUp") {
+        if (historyIndex > 0) {
+            historyIndex--;
+            input.value = commandHistory[historyIndex];
+        }
+        e.preventDefault();
+    }
+
+    // seta para baixo (avançar histórico)
+    if (e.key === "ArrowDown") {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            input.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            input.value = "";
+        }
+        e.preventDefault();
     }
 });
+
 
 
 /* -------------------------------
@@ -460,7 +490,6 @@ print("out", "Digite 'help' para ver os comandos disponíveis.");
         background:#000;
     "></iframe>
 </div>
-
 
 </body>
 </html>
