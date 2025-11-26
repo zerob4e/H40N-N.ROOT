@@ -297,12 +297,13 @@ if (lower.startsWith("open ")) {
     /* HELP */
     if (lower === "help") {
         print("out", "===== Comandos disponíveis");
-        print("out", "help     - Lista comandos");
-        print("out", "users    - Lista usuários");
-        print("out", "login    - Autenticação");
-        print("out", "logout   - Encerrar sessão");
-        print("out", "files    - Lista arquivos (requer login)");
-        print("out", "open <pasta>    - Abre diretório (requer login)");
+        print("out", "help                    - Lista comandos");
+        print("out", "users                   - Lista usuários");
+        print("out", "login user senha        - Autenticação");
+        print("out", "files                   - Lista arquivos (requer login)");
+        print("out", "open [pasta]            - Abre diretório (requer login)");
+        print("out", "open [pasta] [arquivo]  - Abre diretório (requer login)");
+        print("out", "logout                  - Encerrar sessão");
         print("out", "");
         return;
     }
@@ -344,14 +345,24 @@ if (lower.startsWith("open ")) {
 
     /* LOGOUT */
     if (lower === "logout") {
-        if (!loggedIn) {
-            print("error", "Nenhum usuário logado.");
-            return;
-        }
-        loggedIn = false;
-        currentUser = null;
-        print("success", "Sessão encerrada.");
+    if (!loggedIn) {
+        print("error", "Nenhum usuário logado.");
         return;
+    }
+
+    loggedIn = false;
+    currentUser = null;
+
+    // Limpa o histórico
+    output.innerHTML = "";
+
+    // Mensagem de sucesso
+    print("success", "Sessão encerrada.");
+
+    // Mensagem inicial
+    print("out", "Digite 'help' para ver os comandos disponíveis.");
+
+    return;
     }
 
     /* STATUS */
