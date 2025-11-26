@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>H40N - Terminal V3.3</title>
+
+<style>
+    body {
+        background: #0a0a0a;
+        margin: 0;
+        padding: 0;
+        font-family: monospace;
+        color: #e5e5e5;
+    }
+
+    .terminal-wrapper {
+        width: 90%;
+        max-width: 900px;
+        margin: 40px auto;
+        border: 1px solid #333;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #111;
+        box-shadow: 0px 0px 20px rgba(0,0,0,0.6);
+    }
+
+    .terminal-header {
+        background: #1a1a1a;
+        padding: 10px;
+        border-bottom: 1px solid #333;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .dot.red { background: #ff5f56; }
+    .dot.yellow { background: #ffbd2e; }
+    .dot.green { background: #27c93f; }
+
+    .terminal-title {
+        flex: 1;
+        text-align: center;
+        opacity: 0.7;
+    }
+
+    #output {
+        height: 80vh;
+        overflow-y: auto;
+        padding: 15px;
+        line-height: 1.45em;
+        white-space: pre-wrap;
+    }
+
+    .terminal-input-area {
+        display: flex;
+        gap: 10px;
+        padding: 12px;
+        background: #1a1a1a;
+        border-top: 1px solid #333;
+    }
+
+    #input {
+        width: 100%;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #e5e5e5;
+        font-size: 1em;
+    }
+
+    .cmd { color: #e5e5e5; }
+    .out { color: #cccccc; }
+    .error { color: #ff4d4d; }
+    .success { color: #00e676; }
+    .progress { color: #ffe100; }
+</style>
+</head>
+
+<body>
+
+<div class="terminal-wrapper">
+    <div class="terminal-header">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+        <div class="terminal-title">H40N - N.ROOT | TERMINAL V3.3</div>
+    </div>
+
+    <div id="output"></div>
+
+    <div class="terminal-input-area">
+        <span style="color:#00e676; font-weight:bold;">&gt;</span>
+        <input id="input" type="text" autocomplete="off" placeholder="Digite um comando..." autofocus />
+    </div>
+</div>
+
+<script>
+/* -------------------------------
+   DATABASE SIMULADO
+-------------------------------- */
+const database = {
+    users: [
+        { id: 2, name: "ECH0", email: "ech0@h40n.sys", role: "user", password: "33#MOON#" },
+        { id: 3, name: "H40N", email: "h40n@h40n.sys", role: "user", password: "PR4G4#33" }
+    ]
+};
+
+let loggedIn = false;
+let currentUser = null;
+
+const protectedCommands = ["status", "about", "files", "scan"];
+const output = document.getElementById("output");
+const input = document.getElementById("input");
+
+/* -------------------------------
+   SISTEMA DE PASTAS E ARQUIVOS
+-------------------------------- */
+ /* H40N PASTAS */
+const h40nFolders = {
+    "arquivos.amanecer": ["arq.relatorio", "arq.experimento"],
+    "arquivos.kitsune": ["arq.yokai", "arq.yokai-anexos"],
+    "arquivos.tpd-3": ["relatorio [LOCKED]", "anexos [LOCKED]", "H40N/33 [LOCKED]"]
+};
+
+/* ECH0 PASTAS */
+const ech0Folders = {
+    "anomaly": ["anomaly-index", "noah_anchor", "temporal_map"],
+    "dsp-n": ["quantum_sys", "node-n.root"],
+};
+
+ /* ARQUIVOS */
+const fileSystem = {
+    "arquivos.amanecer": {
+        "arq.relatorio": "docs/amanecer_arq-relatorio.html",
+        "arq.experimento": "docs/amanecer_arq-experimento.html",
+    },
+    "arquivos.kitsune": {
+        "arq.yokai":"docs/kitsune_arq-relatorio.html",
+        "arq.yokai-anexos":"docs/kitsune_arq-anexos.html",
+    },
+    "arquivos.tpd-3": {},
+
+    /* ECH0 */
+    "anomaly": {
+        "anomaly-index": "docs/error403.html",
+        "noah_anchor": "docs/error403.html",
+        "temporal_map": "docs/error403.html"
+    },
+
+    "dsp-n": {
+        "quantum_sys": "docs/error403.html",
+        "node-n.root": "docs/node-n_root.html"
+    }
+};
+
+function openFileInViewer(path) {
+    document.getElementById("viewerFrame").src = path;
+    document.getElementById("viewerOverlay").style.display = "block";
+}
+
+function closeViewer() {
+    document.getElementById("viewerOverlay").style.display = "none";
+    document.getElementById("viewerFrame").src = "";
+}
+
+
+/* -------------------------------
+   FUNÇÃO DE IMPRESSÃO
+-------------------------------- */
+function print(type, text) {
+    const line = document.createElement("div");
+    line.className = type;
+    line.innerHTML = text;
+    output.appendChild(line);
+    output.scrollTop = output.scrollHeight;
+}
+
+/* -------------------------------
+   NOVO COMANDO: open <pasta>
+-------------------------------- */
+function handleOpen(folder) {
+
+    /* ECH0 */
+    if (currentUser === "ECH0") {
+        const ech0Folders = {
+            "anomaly": [
+                "anomaly-index",
+                "noah_anchor",
+                "temporal_map",
+            ],
+            "dsp-n": [
+                "quantum_sys",
+                "node-n.root",
+            ]
+        };
+
+        if (ech0Folders[folder]) {
+            print("progress", `Abrindo /${folder} ...`);
+            ech0Folders[folder].forEach(f => print("out", " " + "[LOCKED]  " + f));
+            print("error", "[FAILURE] AMANECER::IntegrityCheck → violação detectada");
+            return;
+        }
+        print("error", `Pasta '${folder}' criptografada`);
+        return;
+    }
+
+    /* H40N */
+    if (currentUser === "H40N") {
+        const h40nFolders = {
+            "arquivos.amanecer": ["arq.relatorio", "arq.experimento"],
+            "arquivos.kitsune": ["arq.yokai", "arq.yokai-anexos"],
+            "arquivos.tpd-3": ["arq.tpd-relatorio", "arq.tpd-anexos", "arq.H40N-33"]
+        };
+
+        if (h40nFolders[folder]) {
+            print("progress", `Abrindo /${folder} ...`);
+            h40nFolders[folder].forEach(f => print("out", " " + f));
+            return;
+        }
+
+
+        print("error", `Pasta '${folder}' não encontrada ou bloqueada.`);
+        return;
+    }
+
+    /* Sem login */
+    print("error", "Você precisa fazer login para abrir pastas.");
+}
+
+
+
+/* -------------------------------
+   HANDLE DE COMANDOS PRINCIPAIS
+-------------------------------- */
+function handleCommand(raw) {
+    const cmd = raw.trim();
+    const lower = cmd.toLowerCase();
+    if (!cmd) return;
+
+    print("cmd", "/" + cmd);
+
+    /* OPEN - 2 modos:
+   open <pasta>
+   open <pasta> <arquivo>
+*/
+if (lower.startsWith("open ")) {
+    const parts = cmd.split(" ");
+
+    // open <pasta>
+    if (parts.length === 2) {
+        const folder = parts[1].toLowerCase();
+
+        // mantém funcionamento existente via handleOpen()
+        handleOpen(folder);
+        return;
+    }
+
+    // open <pasta> <arquivo>
+    if (parts.length === 3) {
+        const folder = parts[1].toLowerCase();
+        const file = parts[2].toLowerCase();
+
+        if (!fileSystem[folder]) {
+            print("error", `Pasta '${folder}' não encontrada ou bloqueada.`);
+            return;
+        }
+
+        if (!fileSystem[folder][file]) {
+            print("error", `Arquivo '${file}' não encontrado em '${folder}'.`);
+            return;
+        }
+
+        const htmlPath = fileSystem[folder][file];
+        openFileInViewer(htmlPath);
+        return;
+
+    }
+
+    print("error", "Uso correto: open <pasta> ou open <pasta> <arquivo>");
+    return;
+}
+
+
+    /* Proteção */
+    if (protectedCommands.includes(lower) && !loggedIn) {
+        print("error", "Acesso negado. Faça login para continuar.");
+        return;
+    }
+
+    /* HELP */
+    if (lower === "help") {
+        print("out", "===== Comandos disponíveis");
+        print("out", "help     - Lista comandos");
+        print("out", "users    - Lista usuários");
+        print("out", "login    - Autenticação");
+        print("out", "logout   - Encerrar sessão");
+        print("out", "files    - Lista arquivos (requer login)");
+        print("out", "open <pasta>    - Abre diretório (requer login)");
+        print("out", "");
+        return;
+    }
+
+    /* CLEAR */
+    if (lower === "clear") {
+        output.innerHTML = "";
+        return;
+    }
+
+    /* USERS */
+    if (lower === "users") {
+        print("success", "===== Lista de usuários");
+        database.users.forEach(u => {
+            print("out", `[${u.role.toUpperCase()}] ${u.name} - ${u.email}`);
+        });
+        return;
+    }
+
+    /* LOGIN */
+    if (lower.startsWith("login ")) {
+        const [_, user, ...passArray] = cmd.split(" ");
+        const pass = passArray.join(" ");
+
+        const found = database.users.find(
+            u => u.name.toLowerCase() === user.toLowerCase() && u.password === pass
+        );
+
+        if (!found) {
+            print("error", "Credenciais inválidas.");
+            return;
+        }
+
+        loggedIn = true;
+        currentUser = found.name;
+        print("success", `Login bem-sucedido. Bem-vindo, ${found.name}.`);
+        return;
+    }
+
+    /* LOGOUT */
+    if (lower === "logout") {
+        if (!loggedIn) {
+            print("error", "Nenhum usuário logado.");
+            return;
+        }
+        loggedIn = false;
+        currentUser = null;
+        print("success", "Sessão encerrada.");
+        return;
+    }
+
+    /* STATUS */
+    if (lower === "status") {
+        print("success", "Status: ATIVO");
+        print("success", "Sistema: ONLINE");
+        return;
+    }
+
+    /* ABOUT */
+    if (lower === "about") {
+        print("success", "===== Sobre");
+        print("out", "H40N Terminal v3.3");
+        return;
+    }
+
+    /* FILES */
+    if (lower === "files") {
+        /* PASTAS ECH0 */
+        if (currentUser === "ECH0") {
+            print("out", "📁 anomaly");
+            print("out", "📁 dsp-n");
+            return;
+        }
+
+        /* PASTAS H40N */
+        if (currentUser === "H40N") {
+            print("out", "📁 arquivos.amanecer");
+            print("out", "📁 arquivos.kitsune");
+            print("out", "📁 arquivos.tpd-3");
+            return;
+        }
+
+        return;
+    }
+
+    /* SCAN */
+    if (lower === "scan") {
+        print("progress", "Iniciando scan da rede...");
+        print("sucess", "192.168.1.1    ONLINE");
+        print("out", "");
+        return;
+    }
+
+    /* Comando não reconhecido */
+    print("error", `Comando não reconhecido ou incorreto: '${cmd}'`);
+}
+
+
+
+/* -------------------------------
+   INPUT
+-------------------------------- */
+input.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+        const value = input.value;
+        input.value = "";
+        handleCommand(value);
+    }
+});
+
+
+/* -------------------------------
+   BOOT
+-------------------------------- */
+print("progress", "Inicializando Terminal...");
+print("success", "Conectado a H40N - N.ROOT");
+print("out", "Digite 'help' para ver os comandos disponíveis.");
+</script>
+
+<!-- VIEWER OCULTO PARA ABRIR HTML REAL -->
+<div id="viewerOverlay" style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.8);
+    backdrop-filter:blur(6px);
+    z-index:9999;
+    padding:20px;
+">
+    <button onclick="closeViewer()" style="
+        background:#900;
+        border:none;
+        color:#fff;
+        padding:6px 12px;
+        font-family:monospace;
+        cursor:pointer;
+        margin-bottom:10px;
+    ">Fechar</button>
+
+    <iframe id="viewerFrame" style="
+        width:100%;
+        height:90%;
+        border:none;
+        background:#000;
+    "></iframe>
+</div>
+
+
+</body>
+</html>
