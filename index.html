@@ -123,6 +123,46 @@ const output = document.getElementById("output");
 const input = document.getElementById("input");
 
 /* -------------------------------
+   SISTEMA DE FILA + DELAY APÓS PROGRESS
+-------------------------------- */
+let queue = [];
+let processing = false;
+let delayAfterProgress = false;
+
+function queueMessage(type, text, speed = 20) {
+    queue.push({ type, text, speed });
+    processQueue();
+}
+
+function processQueue() {
+    if (processing || queue.length === 0) return;
+
+    const { type, text, speed } = queue.shift();
+    processing = true;
+
+    let delay = 0;
+
+    // se a última linha foi progress → aplica delay de 5s
+    if (delayAfterProgress && type !== "progress") {
+        delay = 5000;
+        delayAfterProgress = false;
+    }
+
+    // se esta linha for progress → ativa delay para próxima
+    if (type === "progress") {
+        delayAfterProgress = true;
+    }
+
+    setTimeout(() => {
+        typeWrite(type, text, speed, () => {
+            processing = false;
+            processQueue();
+        });
+    }, delay);
+}
+
+
+/* -------------------------------
    SISTEMA DE PASTAS E ARQUIVOS
 -------------------------------- */
  /* H40N PASTAS */
@@ -177,13 +217,38 @@ function closeViewer() {
 /* -------------------------------
    FUNÇÃO DE IMPRESSÃO
 -------------------------------- */
-function print(type, text) {
+function print(type, text, speed = 20) {
+    queueMessage(type, text, speed);
+}
+
+
+/* -------------------------------
+   FUNÇÃO: DIGITAÇÃO LETRA POR LETRA (corrigida)
+   Atualiza um único elemento em vez de criar vários.
+   Aceita callback opcional quando terminar.
+-------------------------------- */
+function typeWrite(type, text, speed = 20, callback) {
+    let i = 0;
+
     const line = document.createElement("div");
     line.className = type;
-    line.innerHTML = text;
     output.appendChild(line);
     output.scrollTop = output.scrollHeight;
+
+    function writeChar() {
+        if (i <= text.length) {
+            line.textContent = text.substring(0, i);
+            output.scrollTop = output.scrollHeight;
+            i++;
+            setTimeout(writeChar, speed);
+        } else {
+            if (callback) callback();
+        }
+    }
+
+    writeChar();
 }
+
 
 /* -------------------------------
    NOVO COMANDO: open <pasta>
@@ -413,11 +478,31 @@ if (lower.startsWith("open ")) {
         return;
     }
 
+    /* ACTIVE TPD-3 */
+    if (lower === "active tpd-3") {
+        if (!loggedIn) {
+        print("error", "Acesso negado. Faça login para continuar.");
+        return;
+        }
+
+        if (currentUser !== "H40N") {
+        print("error", "Permissão insuficiente. Apenas H40N pode ativar TPD-3.");
+        return;
+        }
+
+    // Linha inicial animada (instantânea)
+    print("progress", "Iniciando protocolo TPD-3...");
+    print("out", "checksum: OK");
+    print("out", "ZONA T-NULL criada");
+    print("success", "Protocolo AMANECER::CORE ativado");
+    print("progress", "Descriptografando canal interno...");
+    print("success", "Acesso concedido à ZONA T-NULL");
+    print("out", "TPD-3 :: status → ONLINE")
+    return;
+}
     /* Comando não reconhecido */
     print("error", `Comando não reconhecido ou incorreto: '${cmd}'`);
 }
-
-
 
 /* -------------------------------
    INPUT
@@ -452,8 +537,6 @@ input.addEventListener("keydown", e => {
         e.preventDefault();
     }
 });
-
-
 
 /* -------------------------------
    BOOT
@@ -490,6 +573,5 @@ print("out", "Digite 'help' para ver os comandos disponíveis.");
         background:#000;
     "></iframe>
 </div>
-
 </body>
 </html>
