@@ -275,8 +275,8 @@ function handleOpen(folder) {
 
         if (ech0Folders[folder]) {
             print("progress", `Abrindo /${folder} ...`);
-            ech0Folders[folder].forEach(f => print("out", " " + "[LOCKED]  " + f));
-            print("error", "[FAILURE] AMANECER::IntegrityCheck → violação detectada");
+            ech0Folders[folder].forEach(f => print("out", " " + f));
+            print("error", "[FAILURE] ERR04==ECH0 :: IntegrityCheck → violação detectada");
             return;
         }
         print("error", `Pasta '${folder}' criptografada`);
