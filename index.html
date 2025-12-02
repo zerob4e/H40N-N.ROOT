@@ -142,9 +142,9 @@ function processQueue() {
 
     let delay = 0;
 
-    // se a última linha foi progress → aplica delay de 5s
+    // se a última linha foi progress → aplica delay de 3s
     if (delayAfterProgress && type !== "progress") {
-        delay = 5000;
+        delay = 3000;
         delayAfterProgress = false;
     }
 
@@ -167,9 +167,9 @@ function processQueue() {
 -------------------------------- */
  /* H40N PASTAS */
 const h40nFolders = {
-    "arquivos.amanecer": ["arq.relatorio", "arq.experimento"],
-    "arquivos.kitsune": ["arq.yokai", "arq.yokai-anexos"],
-    "arquivos.tpd-3": ["relatorio [LOCKED]", "anexos [LOCKED]", "H40N/33 [LOCKED]"]
+    "arquivos.amanecer": ["relatorio-anamecer", "experimento-amanecer"],
+    "arquivos.kitsune": ["relatorio-yokai", "anexos-yokai"],
+    "arquivos.tpd-3": ["tpd-relatorio", "tpd-anexos", "arq-operador"]
 };
 
 /* ECH0 PASTAS */
@@ -181,14 +181,18 @@ const ech0Folders = {
  /* ARQUIVOS */
 const fileSystem = {
     "arquivos.amanecer": {
-        "arq.relatorio": "docs/amanecer_arq-relatorio.html",
-        "arq.experimento": "docs/amanecer_arq-experimento.html",
+        "relatorio-amanecer": "docs/amanecer_arq-relatorio.html",
+        "experimento-amanecer": "docs/amanecer_arq-experimento.html"
     },
     "arquivos.kitsune": {
-        "arq.yokai":"docs/kitsune_arq-relatorio.html",
-        "arq.yokai-anexos":"docs/kitsune_arq-anexos.html",
+        "relatorio-yokai":"docs/kitsune_arq-relatorio.html",
+        "anexos-yokai":"docs/kitsune_arq-anexos.html"
     },
-    "arquivos.tpd-3": {},
+    "arquivos.tpd-3": {
+        "tpd-relatorio":"docs/error403.html",
+        "tpd-anexos":"docs/error403.html",
+        "arq-operador":"docs/error403.html"
+    },
 
     /* ECH0 */
     "anomaly": {
@@ -282,9 +286,9 @@ function handleOpen(folder) {
     /* H40N */
     if (currentUser === "H40N") {
         const h40nFolders = {
-            "arquivos.amanecer": ["arq.relatorio", "arq.experimento"],
-            "arquivos.kitsune": ["arq.yokai", "arq.yokai-anexos"],
-            "arquivos.tpd-3": ["arq.tpd-relatorio", "arq.tpd-anexos", "arq.H40N-33"]
+            "arquivos.amanecer": ["relatorio-amanecer", "experimento-amanecer"],
+            "arquivos.kitsune": ["relatorio-yokai", "anexos-yokai"],
+            "arquivos.tpd-3": ["tpd-relatorio", "tpd-anexos", "arq-operador"]
         };
 
         if (h40nFolders[folder]) {
@@ -478,31 +482,54 @@ if (lower.startsWith("open ")) {
         return;
     }
 
-    /* ACTIVE TPD-3 */
-    if (lower === "active tpd-3") {
+    /* STATUS TPD-3 */
+    if (lower === "status tpd-3") {
         if (!loggedIn) {
         print("error", "Acesso negado. Faça login para continuar.");
         return;
         }
 
         if (currentUser !== "H40N") {
-        print("error", "Permissão insuficiente. Apenas H40N pode ativar TPD-3.");
+        print("error", "Permissão insuficiente");
         return;
         }
 
     // Linha inicial animada (instantânea)
-    print("progress", "Iniciando protocolo TPD-3...");
-    print("out", "checksum: OK");
-    print("out", "ZONA T-NULL criada");
-    print("success", "Protocolo AMANECER::CORE ativado");
-    print("progress", "Descriptografando canal interno...");
-    print("success", "Acesso concedido à ZONA T-NULL");
-    print("out", "TPD-3 :: status → ONLINE")
+    print("progress", "Localizando protocolo TPD-3...");
+    print("out", "checksum: ok");
+    print("success", "TPD-3 :: ativo");
+    print("success", "ZONA T-NULL :: confirmada")
     return;
-}
+    }
+
+        /* STATUS H40N -- OPERADOR */
+    if (lower === "status operador") {
+        if (!loggedIn) {
+        print("error", "Acesso negado. Faça login para continuar.");
+        return;
+        }
+
+        if (currentUser !== "H40N") {
+        print("error", "Permissão insuficiente");
+        return;
+        }
+
+    // Linha inicial animada (instantânea)
+    print("progress", "Localizando operador...");
+    print("out", "Frequência cardíaca :: INDETERMINADA");
+    print("out", "Atividade neural :: OSCILANTE");
+    print("out", "Integridade fisiológica :: DECRESCENTE [70%]");
+    print("out", "Coerência de memória :: INSTÁVEL [40%]");
+    print("out", "Presença física :: DETECTADA EM MÚLTIPLOS FRAMES");
+    print("error", "Status geral :: VIVO | DESCALIBRADO | PRESO NA ZONA T-NULL")
+    return;
+    }
+
     /* Comando não reconhecido */
     print("error", `Comando não reconhecido ou incorreto: '${cmd}'`);
 }
+
+
 
 /* -------------------------------
    INPUT
@@ -537,6 +564,8 @@ input.addEventListener("keydown", e => {
         e.preventDefault();
     }
 });
+
+
 
 /* -------------------------------
    BOOT
@@ -573,5 +602,7 @@ print("out", "Digite 'help' para ver os comandos disponíveis.");
         background:#000;
     "></iframe>
 </div>
+
+
 </body>
 </html>
