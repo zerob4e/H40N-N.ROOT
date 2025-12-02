@@ -175,7 +175,7 @@ const h40nFolders = {
 /* ECH0 PASTAS */
 const ech0Folders = {
     "anomaly": ["anomaly-index", "noah_anchor", "temporal_map"],
-    "dsp-n": ["quantum_sys", "node-n.root"],
+    "moon": ["quantum_sys", "node-n.root"],
 };
 
  /* ARQUIVOS */
@@ -201,7 +201,7 @@ const fileSystem = {
         "temporal_map": "docs/error403.html"
     },
 
-    "dsp-n": {
+    "moon": {
         "quantum_sys": "docs/error403.html",
         "node-n.root": "docs/node-n_root.html"
     }
@@ -267,7 +267,7 @@ function handleOpen(folder) {
                 "noah_anchor",
                 "temporal_map",
             ],
-            "dsp-n": [
+            "moon": [
                 "quantum_sys",
                 "node-n.root",
             ]
@@ -276,7 +276,7 @@ function handleOpen(folder) {
         if (ech0Folders[folder]) {
             print("progress", `Abrindo /${folder} ...`);
             ech0Folders[folder].forEach(f => print("out", " " + f));
-            print("error", "[FAILURE] ERR04==ECH0 :: IntegrityCheck → violação detectada");
+            print("error", "[FAILURE] ECH0-ERR04::IntegrityCheck → violação detectada");
             return;
         }
         print("error", `Pasta '${folder}' criptografada`);
@@ -459,7 +459,7 @@ if (lower.startsWith("open ")) {
         /* PASTAS ECH0 */
         if (currentUser === "ECH0") {
             print("out", "📁 anomaly");
-            print("out", "📁 dsp-n");
+            print("out", "📁 moon");
             return;
         }
 
