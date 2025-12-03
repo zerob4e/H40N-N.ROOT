@@ -34,6 +34,15 @@
         gap: 10px;
     }
 
+    .header-buttons {
+        background: #1a1a1a;
+        padding: 10px;
+        border-bottom: 1px solid #333;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
     .dot {
         width: 12px;
         height: 12px;
@@ -80,6 +89,7 @@
     .error { color: #ff4d4d; }
     .success { color: #00e676; }
     .progress { color: #ffe100; }
+    
 </style>
 </head>
 
@@ -94,6 +104,51 @@
     </div>
 
     <div id="output"></div>
+
+<!-- =============================
+     VISUALIZADOR EMBUTIDO (COM HEADER DO TERMINAL)
+     ============================= -->
+<div id="viewerOverlay" 
+     style="
+        display:none;
+        position:absolute;
+        top:0;
+        left:0;
+        width:100%;
+        height:100%;
+        z-index: 999;
+        background: rgba(0,0,0,0.75);
+        backdrop-filter: blur(3px);
+     ">
+
+    <div style="
+        width:90%;
+        height:85%;
+        margin:40px auto 0 auto;
+        background:#0a0a0a;
+        border:1px solid #333;
+        border-radius:12px;
+        overflow:hidden;
+        display:flex;
+        flex-direction:column;
+        box-shadow:0 0 20px rgba(0,0,0,0.7);
+    ">
+
+        <!-- HEADER DO VIEWER (IDÊNTICO AO DO TERMINAL) -->
+        <div class="header-buttons">
+            <div class="dot red" onclick="closeViewer()"></div>
+            <div class="dot yellow"></div>
+            <div class="dot green"></div>
+        </div>
+
+        <!-- Área do conteúdo -->
+        <iframe id="viewerFrame"
+                style="width:100%; height:100%; border:none; background:#0a0a0a;">
+        </iframe>
+
+    </div>
+
+</div>
 
     <div class="terminal-input-area">
         <span style="color:#00e676; font-weight:bold;">&gt;</span>
@@ -207,9 +262,9 @@ const fileSystem = {
     }
 };
 
-function openFileInViewer(path) {
-    document.getElementById("viewerFrame").src = path;
-    document.getElementById("viewerOverlay").style.display = "block";
+function openFileInViewer(path) { 
+    document.getElementById("viewerFrame").src = path; 
+    document.getElementById("viewerOverlay").style.display = "block"; 
 }
 
 function closeViewer() {
@@ -602,7 +657,6 @@ print("out", "Digite 'help' para ver os comandos disponíveis.");
         background:#000;
     "></iframe>
 </div>
-
-
+    
 </body>
 </html>
