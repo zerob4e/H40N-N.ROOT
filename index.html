@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>H40N - Terminal V3.3</title>
+<title>H40N - Terminal V3.3 (Corrigido)</title>
 
 <style>
     body {
@@ -23,6 +23,7 @@
         overflow: hidden;
         background: #111;
         box-shadow: 0px 0px 20px rgba(0,0,0,0.6);
+        position: relative;
     }
 
     .terminal-header {
@@ -89,13 +90,14 @@
     .error { color: #ff4d4d; }
     .success { color: #00e676; }
     .progress { color: #ffe100; }
-    
+    .note { color: #bdbdbd; opacity: 1; transition: opacity 0.6s; }
 </style>
 </head>
 
 <body>
 
 <div class="terminal-wrapper">
+
     <div class="terminal-header">
         <div class="dot red"></div>
         <div class="dot yellow"></div>
@@ -103,52 +105,43 @@
         <div class="terminal-title">H40N - N.ROOT | TERMINAL V3.3</div>
     </div>
 
-    <div id="output"></div>
+    <div id="output" aria-live="polite"></div>
 
-<!-- =============================
-     VISUALIZADOR EMBUTIDO (COM HEADER DO TERMINAL)
-     ============================= -->
-<div id="viewerOverlay" 
-     style="
-        display:none;
-        position:absolute;
-        top:0;
-        left:0;
-        width:100%;
-        height:100%;
-        z-index: 999;
-        background: rgba(0,0,0,0.75);
-        backdrop-filter: blur(3px);
-     ">
+    <div id="viewerOverlay" 
+        style="
+            display:none;
+            position:absolute;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            z-index: 999;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(3px);
+        ">
+        <div style="
+            width:90%;
+            height:85%;
+            margin:40px auto 0 auto;
+            background:#0a0a0a;
+            border:1px solid #333;
+            border-radius:12px;
+            overflow:hidden;
+            display:flex;
+            flex-direction:column;
+            box-shadow:0 0 20px rgba(0,0,0,0.7);
+        ">
+            <div class="header-buttons">
+                <div class="dot red" onclick="closeViewer()"></div>
+                <div class="dot yellow"></div>
+                <div class="dot green"></div>
+            </div>
 
-    <div style="
-        width:90%;
-        height:85%;
-        margin:40px auto 0 auto;
-        background:#0a0a0a;
-        border:1px solid #333;
-        border-radius:12px;
-        overflow:hidden;
-        display:flex;
-        flex-direction:column;
-        box-shadow:0 0 20px rgba(0,0,0,0.7);
-    ">
-
-        <!-- HEADER DO VIEWER (IDÊNTICO AO DO TERMINAL) -->
-        <div class="header-buttons">
-            <div class="dot red" onclick="closeViewer()"></div>
-            <div class="dot yellow"></div>
-            <div class="dot green"></div>
+            <iframe id="viewerFrame"
+                    style="width:100%; height:100%; border:none; background:#0a0a0a;">
+            </iframe>
         </div>
-
-        <!-- Área do conteúdo -->
-        <iframe id="viewerFrame"
-                style="width:100%; height:100%; border:none; background:#0a0a0a;">
-        </iframe>
-
     </div>
-
-</div>
 
     <div class="terminal-input-area">
         <span style="color:#00e676; font-weight:bold;">&gt;</span>
@@ -157,83 +150,172 @@
 </div>
 
 <script>
-
+/* -------------------------
+   Variáveis principais
+-------------------------*/
 let commandHistory = [];
 let historyIndex = -1;
-/* -------------------------------
-   DATABASE SIMULADO
--------------------------------- */
+
 const database = {
     users: [
-        { id: 2, name: "ECH0", email: "ech0@h40n.sys", role: "user", password: "33#MOON#" },
+        { id: 2, name: "ECH0", email: "ech0@h40n.sys", role: "user", password: "33#33", locked: true },
         { id: 3, name: "H40N", email: "h40n@h40n.sys", role: "user", password: "PR4G4#33" }
     ]
 };
 
 let loggedIn = false;
 let currentUser = null;
-
 const protectedCommands = ["status", "about", "files", "scan"];
 const output = document.getElementById("output");
 const input = document.getElementById("input");
 
-/* -------------------------------
-   SISTEMA DE FILA + DELAY APÓS PROGRESS
--------------------------------- */
+/* FILA PARA MENSAGENS */
 let queue = [];
 let processing = false;
 let delayAfterProgress = false;
 
-function queueMessage(type, text, speed = 20) {
-    queue.push({ type, text, speed });
-    processQueue();
+/* função segura para logar erros JS no terminal */
+function safeLogError(err) {
+    try {
+        const msg = (err && err.message) ? err.message : String(err);
+        queueMessage("error", `[JS ERROR] ${msg}`, 5);
+        console.error(err);
+    } catch (e) {
+        console.error("Erro ao logar erro:", e);
+    }
 }
 
+/* Enfileira mensagens */
+function queueMessage(type, text, speed = 20) {
+    try {
+        // proteção contra valores inválidos
+        if (typeof text !== "string") text = String(text);
+        queue.push({ type, text, speed });
+        processQueue();
+    } catch (err) {
+        safeLogError(err);
+    }
+}
+
+/* Processa fila com proteção */
 function processQueue() {
     if (processing || queue.length === 0) return;
-
-    const { type, text, speed } = queue.shift();
+    const job = queue.shift();
+    if (!job) return;
     processing = true;
 
+    const { type, text, speed } = job;
     let delay = 0;
+    try {
+        if (delayAfterProgress && type !== "progress") {
+            delay = 3000;
+            delayAfterProgress = false;
+        }
+        if (type === "progress") delayAfterProgress = true;
 
-    // se a última linha foi progress → aplica delay de 3s
-    if (delayAfterProgress && type !== "progress") {
-        delay = 3000;
-        delayAfterProgress = false;
+        setTimeout(() => {
+            try {
+                typeWrite(type, text, speed, () => {
+                    processing = false;
+                    // next tick para evitar callstack profundo
+                    setTimeout(processQueue, 0);
+                });
+            } catch (err) {
+                processing = false;
+                safeLogError(err);
+                setTimeout(processQueue, 0);
+            }
+        }, delay);
+    } catch (err) {
+        processing = false;
+        safeLogError(err);
     }
+}
 
-    // se esta linha for progress → ativa delay para próxima
-    if (type === "progress") {
-        delayAfterProgress = true;
+/* wrapper para enfileirar (API pública) */
+function print(type, text, speed = 20) {
+    queueMessage(type, text, speed);
+}
+
+/* Digitação letra-a-letra com proteções */
+function typeWrite(type, text, speed = 20, callback) {
+    try {
+        let i = 0;
+        const line = document.createElement("div");
+        line.className = type || "out";
+        line.setAttribute("role", "log");
+        output.appendChild(line);
+        output.scrollTop = output.scrollHeight;
+
+        function writeChar() {
+            try {
+                if (i <= text.length) {
+                    line.textContent = text.slice(0, i);
+                    output.scrollTop = output.scrollHeight;
+                    i++;
+                    // velocidade mínima
+                    const wait = Math.max(1, speed);
+                    setTimeout(writeChar, wait);
+                } else {
+                    line.textContent = text; // garante linha completa
+                    if (type === "note") {
+                        // note fica visível por 10s, depois some
+                        setTimeout(() => {
+                            try {
+                                line.style.opacity = "0";
+                                setTimeout(() => {
+                                    if (line && line.parentNode) line.parentNode.removeChild(line);
+                                }, 600);
+                            } catch (e) { /* ignore */ }
+                        }, 1000);
+                    }
+                    if (typeof callback === "function") callback();
+                }
+            } catch (err) {
+                safeLogError(err);
+                if (typeof callback === "function") callback();
+            }
+        }
+        writeChar();
+    } catch (err) {
+        safeLogError(err);
+        if (typeof callback === "function") callback();
     }
+}
 
-    setTimeout(() => {
-        typeWrite(type, text, speed, () => {
-            processing = false;
-            processQueue();
-        });
-    }, delay);
+/* VIEWER */
+function openFileInViewer(path) {
+    try {
+        const frame = document.getElementById("viewerFrame");
+        const overlay = document.getElementById("viewerOverlay");
+        frame.src = path;
+        overlay.style.display = "block";
+
+        // ARQUIVOS QUE DEVEM GERAR A MENSAGEM ESPECIAL
+        if (path.includes("error403") || path.includes("node-n_error")) {
+            print("error", "[FAILURE] MODULO RESTRITO::CORROMPIDO == ZONA DE MEMÓRIA");
+        } else {
+            print("success", "Abertura bem-sucedida. Arquivo carregado no visualizador");
+        }
+        
+    } catch (err) {
+        safeLogError(err);
+    }
 }
 
 
-/* -------------------------------
-   SISTEMA DE PASTAS E ARQUIVOS
--------------------------------- */
- /* H40N PASTAS */
-const h40nFolders = {
-    "arquivos.amanecer": ["relatorio-anamecer", "experimento-amanecer"],
-    "arquivos.kitsune": ["relatorio-yokai", "anexos-yokai"],
-    "arquivos.tpd-3": ["tpd-relatorio", "tpd-anexos", "arq-operador"]
-};
+function closeViewer() {
+    try {
+        const overlay = document.getElementById("viewerOverlay");
+        const frame = document.getElementById("viewerFrame");
+        overlay.style.display = "none";
+        frame.src = "";
+    } catch (err) {
+        safeLogError(err);
+    }
+}
 
-/* ECH0 PASTAS */
-const ech0Folders = {
-    "anomaly": ["anomaly-index", "noah_anchor", "temporal_map"],
-    "moon": ["quantum_sys", "node-n.root"],
-};
-
- /* ARQUIVOS */
+/* FILESYSTEM */
 const fileSystem = {
     "arquivos.amanecer": {
         "relatorio-amanecer": "docs/amanecer_arq-relatorio.html",
@@ -244,419 +326,244 @@ const fileSystem = {
         "anexos-yokai":"docs/kitsune_arq-anexos.html"
     },
     "arquivos.tpd-3": {
-        "tpd-relatorio":"docs/error403.html",
-        "tpd-anexos":"docs/error403.html",
-        "arq-operador":"docs/error403.html"
+        "tpd-relatorio":"docs/node-n_error.html",
+        "tpd-anexos":"docs/node-n_error.html",
+        "arq-operador":"docs/node-n_root.html"
     },
-
-    /* ECH0 */
     "anomaly": {
         "anomaly-index": "docs/error403.html",
         "noah_anchor": "docs/error403.html",
         "temporal_map": "docs/error403.html"
     },
-
     "moon": {
         "quantum_sys": "docs/error403.html",
         "node-n.root": "docs/node-n_root.html"
     }
 };
 
-function openFileInViewer(path) { 
-    document.getElementById("viewerFrame").src = path; 
-    document.getElementById("viewerOverlay").style.display = "block"; 
-}
-
-function closeViewer() {
-    document.getElementById("viewerOverlay").style.display = "none";
-    document.getElementById("viewerFrame").src = "";
-}
-
-
-/* -------------------------------
-   FUNÇÃO DE IMPRESSÃO
--------------------------------- */
-function print(type, text, speed = 20) {
-    queueMessage(type, text, speed);
-}
-
-
-/* -------------------------------
-   FUNÇÃO: DIGITAÇÃO LETRA POR LETRA (corrigida)
-   Atualiza um único elemento em vez de criar vários.
-   Aceita callback opcional quando terminar.
--------------------------------- */
-function typeWrite(type, text, speed = 20, callback) {
-    let i = 0;
-
-    const line = document.createElement("div");
-    line.className = type;
-    output.appendChild(line);
-    output.scrollTop = output.scrollHeight;
-
-    function writeChar() {
-        if (i <= text.length) {
-            line.textContent = text.substring(0, i);
-            output.scrollTop = output.scrollHeight;
-            i++;
-            setTimeout(writeChar, speed);
-        } else {
-            if (callback) callback();
-        }
-    }
-
-    writeChar();
-}
-
-
-/* -------------------------------
-   NOVO COMANDO: open <pasta>
--------------------------------- */
-function handleOpen(folder) {
-
-    /* ECH0 */
-    if (currentUser === "ECH0") {
-        const ech0Folders = {
-            "anomaly": [
-                "anomaly-index",
-                "noah_anchor",
-                "temporal_map",
-            ],
-            "moon": [
-                "quantum_sys",
-                "node-n.root",
-            ]
-        };
-
-        if (ech0Folders[folder]) {
-            print("progress", `Abrindo /${folder} ...`);
-            ech0Folders[folder].forEach(f => print("out", " " + f));
-            print("error", "[FAILURE] ECH0-ERR04::IntegrityCheck → violação detectada");
-            return;
-        }
-        print("error", `Pasta '${folder}' criptografada`);
-        return;
-    }
-
-    /* H40N */
-    if (currentUser === "H40N") {
-        const h40nFolders = {
-            "arquivos.amanecer": ["relatorio-amanecer", "experimento-amanecer"],
-            "arquivos.kitsune": ["relatorio-yokai", "anexos-yokai"],
-            "arquivos.tpd-3": ["tpd-relatorio", "tpd-anexos", "arq-operador"]
-        };
-
-        if (h40nFolders[folder]) {
-            print("progress", `Abrindo /${folder} ...`);
-            h40nFolders[folder].forEach(f => print("out", " " + f));
-            return;
-        }
-
-
-        print("error", `Pasta '${folder}' não encontrada ou bloqueada.`);
-        return;
-    }
-
-    /* Sem login */
-    print("error", "Você precisa fazer login para abrir pastas.");
-}
-
-
-
-/* -------------------------------
-   HANDLE DE COMANDOS PRINCIPAIS
--------------------------------- */
+/* COMANDOS */
 function handleCommand(raw) {
-    const cmd = raw.trim();
-    const lower = cmd.toLowerCase();
-    if (!cmd) return;
+    try {
+        const cmd = (raw || "").trim();
+        const lower = cmd.toLowerCase();
+        if (!cmd) return;
 
-    commandHistory.push(cmd);
-    historyIndex = commandHistory.length;
+        commandHistory.push(cmd);
+        historyIndex = commandHistory.length;
 
-    print("cmd", "/" + cmd);
+        print("cmd", "/" + cmd);
 
-    /* OPEN - 2 modos:
-   open <pasta>
-   open <pasta> <arquivo>
-*/
-if (lower.startsWith("open ")) {
-    const parts = cmd.split(" ");
+        if (lower.startsWith("open ")) {
+            const parts = cmd.split(" ").filter(Boolean);
+            if (parts.length === 2) return handleOpen(parts[1].toLowerCase());
+            if (parts.length === 3) {
+                const folder = parts[1].toLowerCase();
+                const file = parts[2].toLowerCase();
+                if (!fileSystem[folder]) return print("error", `Pasta '${folder}' não encontrada.`);
+                if (!fileSystem[folder][file]) return print("error", `Arquivo '${file}' não encontrado.`);
+                return openFileInViewer(fileSystem[folder][file]);
+            }
+            return print("error", "Uso correto: open <pasta> ou open <pasta> <arquivo>");
+        }
 
-    // open <pasta>
-    if (parts.length === 2) {
-        const folder = parts[1].toLowerCase();
+        if (protectedCommands.includes(lower) && !loggedIn)
+            return print("error", "Acesso negado. Faça login.");
 
-        // mantém funcionamento existente via handleOpen()
-        handleOpen(folder);
-        return;
-    }
-
-    // open <pasta> <arquivo>
-    if (parts.length === 3) {
-        const folder = parts[1].toLowerCase();
-        const file = parts[2].toLowerCase();
-
-        if (!fileSystem[folder]) {
-            print("error", `Pasta '${folder}' não encontrada ou bloqueada.`);
+        if (lower === "help") {
+            print("out", "=====================================================");
+            print("out", "help                    - Lista comandos");
+            print("out", "users                   - Lista usuários");
+            print("out", "login user senha        - Autenticação");
+            print("out", "files                   - Lista arquivos (requer login)");
+            print("out", "open [pasta]            - Abre diretório (requer login)");
+            print("out", "open [pasta] [arquivo]  - Abre diretório (requer login)");
+            print("out", "logout                  - Encerrar sessão");
+            print("note", "status operador");
+            print("note", "status tpd-3");
+            print("out", "=====================================================");
             return;
         }
 
-        if (!fileSystem[folder][file]) {
-            print("error", `Arquivo '${file}' não encontrado em '${folder}'.`);
+        if (lower === "clear") {
+            output.innerHTML = "";
             return;
         }
 
-        const htmlPath = fileSystem[folder][file];
-        openFileInViewer(htmlPath);
-        return;
+        if (lower === "users") {
+            print("success", "===== Lista de usuários =====");
+            database.users.forEach(u => {
+                print("out", `[${u.role.toUpperCase()}] ${u.name} - ${u.email}`);
+            });
+            return;
+        }
 
+        if (lower.startsWith("login ")) {
+            const [_, user, ...passArray] = cmd.split(" ");
+            const pass = passArray.join(" ");
+            const found = database.users.find(
+                u => u.name.toLowerCase() === (user || "").toLowerCase()
+            );
+
+            if (!found || found.password !== pass) {
+                return print("error", "[FAILURE] LOGIN INVÁLIDO :: CREDENCIAIS INCORRETAS");
+            }
+
+            if (found.locked) {
+                return print("error", "[BLOCK] Usuario bloqueado por violação de segurança.");
+            }
+
+            loggedIn = true;
+            currentUser = found.name;
+            print("success", `Login bem-sucedido. Bem-vindo, ${found.name}`);
+            print("note", "eu posso estar muito louco, mas... não lembro mais do meu ros-to");
+            return;
+        }
+
+        if (lower === "logout") {
+            if (!loggedIn) return print("error", "Nenhum usuário logado.");
+            loggedIn = false;
+            currentUser = null;
+            output.innerHTML = "";
+            print("success", "Sessão encerrada.");
+            print("out", "Digite 'help' para ver os comandos.");
+            return;
+        }
+
+        if (lower === "status") {
+            print("error", "[ERR_HANDLER] Assinatura corrompida");
+            print("error", "[ERR_HANDLER] Operador instavel");
+            return;
+        }
+
+        if (lower === "about") {
+            print("success", "===== Sobre =====");
+            print("out", "H40N Terminal v3.3");
+            return;
+        }
+
+        if (lower === "files") {
+            if (currentUser === "ECH0") {
+                print("out", "📁 anomaly");
+                print("out", "📁 moon");
+                return;
+            }
+            if (currentUser === "H40N") {
+                print("out", "📁 arquivos.amanecer");
+                print("out", "📁 arquivos.kitsune");
+                print("out", "📁 arquivos.tpd-3");
+                return;
+            }
+            return;
+        }
+
+        if (lower === "scan") {
+            print("progress", "Iniciando scan do fluxo...");
+            print("success", "FLUXO :: OPERANTE");
+            print("success", "OPERADOR :: RETIDO");
+            return;
+        }
+
+        if (lower === "status tpd-3") {
+            if (!loggedIn) return print("error", "Acesso negado. Faça login para continuar.");
+            if (currentUser !== "H40N") return print("error", "Permissão insuficiente");
+
+            print("progress", "Localizando protocolo TPD-3...");
+            print("progress", "Validando integridade do módulo...");
+            print("progress", "Verificando assinatura de operador...");
+            print("error", "[ERR_HANDLER::TPD3] Assinatura corrompida");
+            print("error", "[ERR_HANDLER::TPD3] Operador não encontrado");
+            print("out", "");
+            print("note", "isso não fala sobre mim... fala?");
+            return;
+        }
+
+        if (lower === "status operador") {
+            if (!loggedIn) return print("error", "Acesso negado. Faça login para continuar.");
+            if (currentUser !== "H40N") return print("error", "Permissão insuficiente");
+
+            print("progress", "Calculando integridade do operador...");
+            print("out", "Intrusão repetida afetou o operador");
+            print("progress", "Recalculando integridade do operador...");
+            print("out", "Frequência cardíaca :: INDETERMINADA");
+            print("out", "Atividade neural :: OSCILANTE");
+            print("out", "Integridade fisiológica :: DECRESCENTE [60%]");
+            print("out", "Coerência de memória :: INSTÁVEL [40%]");
+            print("out", "Presença física :: DETECTADA EM MÚLTIPLOS ######");
+            print("error", "Status geral :: VIVO | DESCALIBRADO | PRESO NA ZONA T-NULL");
+            print("note", "…eu ainda… aqui— mas… n-ão… por… mu-");
+            return;
+        }
+
+        // comando não reconhecido
+        print("error", `Comando não reconhecido ou incorreto: '${cmd}'`);
+    } catch (err) {
+        safeLogError(err);
     }
-
-    print("error", "Uso correto: open <pasta> ou open <pasta> <arquivo>");
-    return;
 }
 
-
-    /* Proteção */
-    if (protectedCommands.includes(lower) && !loggedIn) {
-        print("error", "Acesso negado. Faça login para continuar.");
-        return;
+function handleOpen(folder) {
+    try {
+        if (!loggedIn) return print("error", "Faça login.");
+        if (!fileSystem[folder]) return print("error", `Pasta '${folder}' não encontrada.`);
+        print("progress", `Abrindo /${folder} ...`);
+        Object.keys(fileSystem[folder]).forEach(f => print("out", " " + f));
+    } catch (err) {
+        safeLogError(err);
     }
-
-    /* HELP */
-    if (lower === "help") {
-        print("out", "===== Comandos disponíveis");
-        print("out", "help                    - Lista comandos");
-        print("out", "users                   - Lista usuários");
-        print("out", "login user senha        - Autenticação");
-        print("out", "files                   - Lista arquivos (requer login)");
-        print("out", "open [pasta]            - Abre diretório (requer login)");
-        print("out", "open [pasta] [arquivo]  - Abre diretório (requer login)");
-        print("out", "logout                  - Encerrar sessão");
-        print("out", "");
-        return;
-    }
-
-    /* CLEAR */
-    if (lower === "clear") {
-        output.innerHTML = "";
-        return;
-    }
-
-    /* USERS */
-    if (lower === "users") {
-        print("success", "===== Lista de usuários");
-        database.users.forEach(u => {
-            print("out", `[${u.role.toUpperCase()}] ${u.name} - ${u.email}`);
-        });
-        return;
-    }
-
-    /* LOGIN */
-    if (lower.startsWith("login ")) {
-        const [_, user, ...passArray] = cmd.split(" ");
-        const pass = passArray.join(" ");
-
-        const found = database.users.find(
-            u => u.name.toLowerCase() === user.toLowerCase() && u.password === pass
-        );
-
-        if (!found) {
-            print("error", "Credenciais inválidas.");
-            return;
-        }
-
-        loggedIn = true;
-        currentUser = found.name;
-        print("success", `Login bem-sucedido. Bem-vindo, ${found.name}.`);
-        return;
-    }
-
-    /* LOGOUT */
-    if (lower === "logout") {
-    if (!loggedIn) {
-        print("error", "Nenhum usuário logado.");
-        return;
-    }
-
-    loggedIn = false;
-    currentUser = null;
-
-    // Limpa o histórico
-    output.innerHTML = "";
-
-    // Mensagem de sucesso
-    print("success", "Sessão encerrada.");
-
-    // Mensagem inicial
-    print("out", "Digite 'help' para ver os comandos disponíveis.");
-
-    return;
-    }
-
-    /* STATUS */
-    if (lower === "status") {
-        print("success", "Status: ATIVO");
-        print("success", "Sistema: ONLINE");
-        return;
-    }
-
-    /* ABOUT */
-    if (lower === "about") {
-        print("success", "===== Sobre");
-        print("out", "H40N Terminal v3.3");
-        return;
-    }
-
-    /* FILES */
-    if (lower === "files") {
-        /* PASTAS ECH0 */
-        if (currentUser === "ECH0") {
-            print("out", "📁 anomaly");
-            print("out", "📁 moon");
-            return;
-        }
-
-        /* PASTAS H40N */
-        if (currentUser === "H40N") {
-            print("out", "📁 arquivos.amanecer");
-            print("out", "📁 arquivos.kitsune");
-            print("out", "📁 arquivos.tpd-3");
-            return;
-        }
-
-        return;
-    }
-
-    /* SCAN */
-    if (lower === "scan") {
-        print("progress", "Iniciando scan da rede...");
-        print("sucess", "192.168.1.1    ONLINE");
-        print("out", "");
-        return;
-    }
-
-    /* STATUS TPD-3 */
-    if (lower === "status tpd-3") {
-        if (!loggedIn) {
-        print("error", "Acesso negado. Faça login para continuar.");
-        return;
-        }
-
-        if (currentUser !== "H40N") {
-        print("error", "Permissão insuficiente");
-        return;
-        }
-
-    // Linha inicial animada (instantânea)
-    print("progress", "Localizando protocolo TPD-3...");
-    print("out", "checksum: ok");
-    print("success", "TPD-3 :: ativo");
-    print("success", "ZONA T-NULL :: confirmada")
-    return;
-    }
-
-        /* STATUS H40N -- OPERADOR */
-    if (lower === "status operador") {
-        if (!loggedIn) {
-        print("error", "Acesso negado. Faça login para continuar.");
-        return;
-        }
-
-        if (currentUser !== "H40N") {
-        print("error", "Permissão insuficiente");
-        return;
-        }
-
-    // Linha inicial animada (instantânea)
-    print("progress", "Localizando operador...");
-    print("out", "Frequência cardíaca :: INDETERMINADA");
-    print("out", "Atividade neural :: OSCILANTE");
-    print("out", "Integridade fisiológica :: DECRESCENTE [70%]");
-    print("out", "Coerência de memória :: INSTÁVEL [40%]");
-    print("out", "Presença física :: DETECTADA EM MÚLTIPLOS FRAMES");
-    print("error", "Status geral :: VIVO | DESCALIBRADO | PRESO NA ZONA T-NULL")
-    return;
-    }
-
-    /* Comando não reconhecido */
-    print("error", `Comando não reconhecido ou incorreto: '${cmd}'`);
 }
 
-
-
-/* -------------------------------
-   INPUT
--------------------------------- */
+/* INPUT: escuta tecla */
 input.addEventListener("keydown", e => {
-    // ENTER executa
-    if (e.key === "Enter") {
-        const value = input.value;
-        input.value = "";
-        handleCommand(value);
-        return;
-    }
-
-    // seta para cima (voltar histórico)
-    if (e.key === "ArrowUp") {
-        if (historyIndex > 0) {
-            historyIndex--;
-            input.value = commandHistory[historyIndex];
-        }
-        e.preventDefault();
-    }
-
-    // seta para baixo (avançar histórico)
-    if (e.key === "ArrowDown") {
-        if (historyIndex < commandHistory.length - 1) {
-            historyIndex++;
-            input.value = commandHistory[historyIndex];
-        } else {
-            historyIndex = commandHistory.length;
+    try {
+        if (e.key === "Enter") {
+            e.preventDefault(); // proteção extra
+            const value = input.value;
             input.value = "";
+            // roda o comando dentro de try/catch (dentro do handleCommand também há try)
+            handleCommand(value);
+            return;
         }
-        e.preventDefault();
+        if (e.key === "ArrowUp") {
+            if (historyIndex > 0) {
+                historyIndex--;
+                input.value = commandHistory[historyIndex] || "";
+            }
+            e.preventDefault();
+            return;
+        }
+        if (e.key === "ArrowDown") {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                input.value = commandHistory[historyIndex] || "";
+            } else {
+                historyIndex = commandHistory.length;
+                input.value = "";
+            }
+            e.preventDefault();
+            return;
+        }
+    } catch (err) {
+        safeLogError(err);
     }
 });
 
-
-
-/* -------------------------------
-   BOOT
--------------------------------- */
+/* BOOT INICIAL */
 print("progress", "Inicializando Terminal...");
+print("out", "Múltiplas tentativas de acesso ao ECH0 foram detectadas");
+print("out", "A intrusão repetida forçou o bloqueio do usuario 'ECH0'");
+print("note", "vou… tent outro… caminho—");
+print("progress", "Tentando conexão alternativa...");
 print("success", "Conectado a H40N - N.ROOT");
 print("out", "Digite 'help' para ver os comandos disponíveis.");
+
+/* captura erros globais e mostra no terminal, útil para debugar sem travar a UI */
+window.addEventListener("error", (ev) => {
+    safeLogError(ev.error || ev.message || "Erro desconhecido");
+});
+window.addEventListener("unhandledrejection", (ev) => {
+    safeLogError(ev.reason || "Promise rejeitada sem handler");
+});
 </script>
 
-<!-- VIEWER OCULTO PARA ABRIR HTML REAL -->
-<div id="viewerOverlay" style="
-    display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.8);
-    backdrop-filter:blur(6px);
-    z-index:9999;
-    padding:20px;
-">
-    <button onclick="closeViewer()" style="
-        background:#900;
-        border:none;
-        color:#fff;
-        padding:6px 12px;
-        font-family:monospace;
-        cursor:pointer;
-        margin-bottom:10px;
-    ">Fechar</button>
-
-    <iframe id="viewerFrame" style="
-        width:100%;
-        height:90%;
-        border:none;
-        background:#000;
-    "></iframe>
-</div>
-    
 </body>
 </html>
