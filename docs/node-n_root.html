@@ -2,117 +2,274 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>KITSUNE_YOKAI — Relatório de Anomalia</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>H40N - N.ROOT | CONTINGENCY</title>
 
 <style>
-    * { box-sizing: border-box; }
-    body {
-        font-family: "Courier New", monospace;
-        background: #fafafa;
-        padding: 25px;
-        color: #222;
-        line-height: 1.55em;
-    }
+body {
+    background: #0a0a0a;
+    margin: 0;
+    padding: 0;
+    font-family: monospace;
+    color: #e5e5e5;
+}
 
-    .block {
-        background: #ffffff;
-        border: 2px solid #d0d0d0;
-        border-radius: 10px;
-        padding: 15px 18px;
-        margin-bottom: 10px;
-    }
+.terminal-wrapper {
+    width: 90%;
+    max-width: 900px;
+    margin: 40px auto;
+    background: #111;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #222;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+}
 
-    .block p {
-    margin: 0px 0;
-    }
+.terminal-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #222;
+}
 
-    .title {
-        background: #7a0a0a;
-        color: white;
-        padding: 14px 18px;
-        font-size: 1.6em;
-        border-radius: 10px;
-        margin-bottom: 22px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-weight: bold;
-    }
+.dot { width: 12px; height: 12px; border-radius: 50%; }
+.red { background: #ff5f56; }
+.yellow { background: #ffbd2e; }
+.green { background: #27c93f; }
 
-    .top-right {
-        font-size: 0.85em;
-        text-align: right;
-        opacity: 0.9;
-    }
+.terminal-title {
+    flex: 1;
+    text-align: center;
+    opacity: 0.75;
+}
 
-    .sub {
-        font-weight: bold;
-        margin-bottom: 6px;
-    }
+#line-container { height: 65vh; padding: 20px; overflow-y: auto; white-space: pre-wrap; }
 
-    hr.bar {
-        border: none;
-        height: 14px;
-        background: #7a0a0a;
-        border-radius: 6px;
-        margin: 10px 0;
-    }
+.terminal-input-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #1a1a1a;
+    border-top: 1px solid #222;
+}
 
-    .code {
-    font-weight: bold;
-    font-size: 1.2em;
-    color: #7a0a0a;
-    }
-    
-    .blink {
-        animation: blink 1s steps(2, start) infinite;
-    }
+#prompt { color: #00e676; font-weight: bold; }
+#input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #e5e5e5;
+    font-size: 1rem;
+}
 
-    @keyframes blink {
-        to { visibility: hidden; }
-    }
-
+.user-msg { color: #6ac8ff; }
+.admin-msg { color: #e5e5e5; font-weight: 700; }
+.note { color: #888; font-style: italic; }
+.line { margin: 5px 0; }
 
 </style>
 </head>
-
 <body>
 
-<div class="title">
-    ERR04-FAILURE
-    <div class="top-right">
-    Código: 403-ERR04
+<div class="terminal-wrapper">
+    <div class="terminal-header">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+        <div class="terminal-title">H40N - N.ROOT | CONTINGENCY</div>
+    </div>
+
+    <div id="line-container"></div>
+
+    <div class="terminal-input-area">
+        <div id="prompt">&gt;</div>
+        <input id="input" autocomplete="off">
     </div>
 </div>
 
-<!-- BLOCO DE REGISTRO PADRÃO -->
-<div class="top-row">
-    <div class="block">
-    <p class="code">[FAILURE] MODULO RESTRITO OU CORROMPIDO</p>
-    <p>O sistema detectou tentativa de entrada em um documento ou zona de memória</p>
-    <p class="blink">isso não é o sistema...</p>
-    </div>
-</div>
+<script>
+const output = document.getElementById("line-container");
+const input = document.getElementById("input");
 
-<hr class="bar">
+/* ==================== FUNÇÃO MÁQUINA DE ESCREVER ==================== */
+function typeWriter(text, cls = "", typeSpeed = 50, callback) {
+    const el = document.createElement("div");
+    el.className = "line " + cls;
+    output.appendChild(el);
+    output.scrollTop = output.scrollHeight;
 
-<div class="block">
-    <strong>Possíveis causas:</strong>
-    <p><strong>[1]</strong> Arquivo movido ou temporariamente bloqueado.</p>
-    <p><strong>[2]</strong> Anomalia de leitura detectada no subsistema AMANECER.</p>
-</div>
+    let i = 0;
+    function type() {
+        if (i <= text.length) {
+            el.textContent = text.substring(0, i);
+            output.scrollTop = output.scrollHeight;
+            i++;
+            setTimeout(type, typeSpeed);
+        } else if (callback) {
+            callback();
+        }
+    }
+    type();
+}
 
-<div class="block">
-    <strong>Procedimentos:</strong>
-    <p><strong>[1]</strong> Retorne ao módulo anterior.<strong> Se o fluxo permitir</strong></p>
-    <p><strong>[2]</strong> Solicite autorização apropriada.</p>
-    <p><strong>[3]</strong> Caso o erro persista, registre ocorrência no ponto <strong>onde o tempo cedeu</strong></p>
-</div>
+/* ==================== FUNÇÃO ESCREVER E APAGAR ==================== */
+function typeWriterWithDelete(text, cls = "", typeSpeed = 50, deleteSpeed = 30, pause = 10000) {
+    const el = document.createElement("div");
+    el.className = "line " + cls;
+    output.appendChild(el);
+    output.scrollTop = output.scrollHeight;
 
-<div class="block">
-    <p class="code">TIC-TAC TIC-TAC</p>
-    <p class="blink">isso não é o sistema...</p>
-</div>
+    let i = 0;
 
+    function type() {
+        if (i <= text.length) {
+            el.textContent = text.substring(0, i);
+            output.scrollTop = output.scrollHeight;
+            i++;
+            setTimeout(type, typeSpeed);
+        } else {
+            setTimeout(deleteText, pause);
+        }
+    }
+
+    function deleteText() {
+        if (i >= 0) {
+            el.textContent = text.substring(0, i);
+            i--;
+            setTimeout(deleteText, deleteSpeed);
+        } else {
+            el.remove();
+        }
+    }
+
+    type();
+}
+
+/* ==================== HISTÓRICO CONTROLADO ==================== */
+const terminalHistory = [
+    { text: "// contingency.run(\"H40N_PC:PR4G4#33\");", animated: false, cls: "admin-msg" },
+    { text: "[user] TKT?DOKO?", animated: false, cls: "user-msg" },
+    { text: "trace = detectado", animated: false, cls: "out" },
+    { text: "access_cmd = status operador", animated: false, cls: "progress" },
+    { text: "[user] Cidade dos Anjos ou El Dorado? Quem é ECH0?", animated: false, cls: "user-msg" },
+    { text: "required_action: executar `status operador`", animated: false, cls: "out" },
+    { text: "sys.lock == ativo ::: tentativa de extração falha", animated: true, cls: "note" },
+];
+
+/* ==================== NOTAS DO NOAH ==================== */
+const noahNotes = [
+    "alguém. por favor... n- me deixe aqui...",
+    "isso tudo é culpa minha... devia ter para-",
+    "não consigo mais distinguir o tempo...",
+    "estou preso... sozinho-",
+    "cada seg- aqui é um pedaço de mim que desaparece-",
+    "o terminal está me consumindo...",
+    "eles estão certos... eu falhei-",
+    "eu sinto que estou desaparecen- fragmento por fragmento...",
+    "…o terminal está vencendo... eu consigo sent-",
+    "se eu pudesse apenas lembrar... meu nome... meu rost-",
+    "praga- por favor... me encontre",
+];
+
+/* ==================== FUNÇÃO SPAWN NOTA ALEATÓRIA ==================== */
+/* Função de digitar e apagar letra por letra */
+/* Função para digitar e apagar letra por letra */
+function typeAndDelete(text, cls = "note", speed = 40, callback) {
+    const line = document.createElement("div");
+    line.className = "line " + cls;
+    output.appendChild(line);
+    output.scrollTop = output.scrollHeight;
+
+    let i = 0;
+    let typing = true;
+
+    function step() {
+        if (typing) {
+            line.textContent = text.substring(0, i);
+            i++;
+            if (i > text.length) {
+                typing = false;
+                setTimeout(step, 1000);
+                return;
+            }
+            setTimeout(step, speed);
+        } else {
+            i--;
+            line.textContent = text.substring(0, i);
+            if (i < 0) {
+                line.remove();
+                if (callback) callback();
+                return;
+            }
+            setTimeout(step, speed / 2);
+        }
+        output.scrollTop = output.scrollHeight;
+    }
+
+    step();
+}
+
+/* ==================== NOTAS DO NOAH ALEATÓRIAS ==================== */
+let noahNoteActive = false;
+
+function spawnNoahNote() {
+    if (noahNoteActive) return;
+    noahNoteActive = true;
+
+    const text = noahNotes[Math.floor(Math.random() * noahNotes.length)];
+
+    typeAndDelete(text, "note", 40, () => {
+        noahNoteActive = false;
+        setTimeout(spawnNoahNote, 3000 + Math.random() * 5000);
+    });
+}
+
+/* Começa as notas após 3 segundos */
+setTimeout(spawnNoahNote, 3000);
+
+
+/* ==================== IMPRIME HISTÓRICO ==================== */
+function printHistory() {
+    terminalHistory.forEach(entry => {
+        if (entry.animated) {
+            typeWriter(entry.text, entry.cls || "", 40);
+        } else {
+            const el = document.createElement("div");
+            el.className = "line " + (entry.cls || "");
+            el.textContent = entry.text;
+            output.appendChild(el);
+        }
+    });
+    output.scrollTop = output.scrollHeight;
+}
+
+/* ==================== INPUT HANDLER ==================== */
+input.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+        const cmd = input.value.trim();
+        if (!cmd) return;
+
+        typeWriter("[user] " + cmd, "user-msg", 30);
+        input.value = "";
+
+        // Notas do Noah aparecem aleatoriamente após comando
+        if (Math.random() < 0.6) spawnNoahNote();
+    }
+});
+
+/* ==================== SPAWN AUTOMÁTICO DE NOTAS ==================== */
+setInterval(() => {
+    // 30% chance a cada intervalo de spawn
+    if (Math.random() < 0.3) spawnNoahNote();
+}, 5000); // a cada 5 segundos
+
+/* ==================== START ==================== */
+printHistory();
+input.focus();
+</script>
 </body>
 </html>
