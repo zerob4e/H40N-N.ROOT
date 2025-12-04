@@ -390,11 +390,11 @@ function handleCommand(raw) {
         }
 
         if (lower === "users") {
-            print("success", "=====================================================");
+            print("out", "=====================================================");
             database.users.forEach(u => {
                 print("out", `[${u.role.toUpperCase()}] ${u.name} - ${u.email}`);
             });
-            print("success", "=====================================================");
+            print("out", "=====================================================");
             return;
         }
 
