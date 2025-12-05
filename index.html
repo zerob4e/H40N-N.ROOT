@@ -165,7 +165,7 @@ const database = {
 
 let loggedIn = false;
 let currentUser = null;
-const protectedCommands = ["status", "about", "files", "scan"];
+const protectedCommands = ["status", "files"];
 const output = document.getElementById("output");
 const input = document.getElementById("input");
 
@@ -338,7 +338,13 @@ const fileSystem = {
     "moon": {
         "quantum_sys": "docs/error403.html",
         "node-n.root": "docs/node-n_root.html"
-    }
+    },
+
+    "usb.drive": {
+    "log-usb": "docs/error403.html",
+    "dump-bin": "docs/error403.html",
+    "captura.raw": "docs/error403.html"
+    },
 };
 
 /* COMANDOS */
@@ -398,6 +404,13 @@ function handleCommand(raw) {
             return;
         }
 
+        if (lower === "about") {
+            print("out", "======================================");
+            print("out", "Sistema criado por H40N em ##.09.20##");
+            print("out", "======================================");
+            return;
+        }
+
         if (lower.startsWith("login ")) {
             const [_, user, ...passArray] = cmd.split(" ");
             const pass = passArray.join(" ");
@@ -416,7 +429,7 @@ function handleCommand(raw) {
             loggedIn = true;
             currentUser = found.name;
             print("success", `Login bem-sucedido. Bem-vindo, ${found.name}`);
-            print("note", "não lembro mais do meu ros-to");
+            print("note", "m- sinto defini-ivam-t perdi-o");
             return;
         }
 
@@ -436,12 +449,6 @@ function handleCommand(raw) {
             return;
         }
 
-        if (lower === "about") {
-            print("success", "===== Sobre =====");
-            print("out", "H40N Terminal v3.3");
-            return;
-        }
-
         if (lower === "files") {
             if (currentUser === "ECH0") {
                 print("out", "📁 anomaly");
@@ -457,13 +464,6 @@ function handleCommand(raw) {
             return;
         }
 
-        if (lower === "scan") {
-            print("progress", "Iniciando scan do fluxo...");
-            print("success", "FLUXO :: OPERANTE");
-            print("success", "OPERADOR :: RETIDO");
-            return;
-        }
-
         if (lower === "status tpd-3") {
             if (!loggedIn) return print("error", "Acesso negado. Faça login para continuar.");
             if (currentUser !== "H40N") return print("error", "Permissão insuficiente");
@@ -474,7 +474,7 @@ function handleCommand(raw) {
             print("error", "[ERR_HANDLER::TPD3] Assinatura corrompida");
             print("error", "[ERR_HANDLER::TPD3] Operador não encontrado");
             print("out", "");
-            print("note", "isso não fala sobre mim... fala?");
+            print("note", "ach- que estou me acostum-ndo com o vazio");
             return;
         }
 
@@ -489,16 +489,37 @@ function handleCommand(raw) {
             print("out", "Coerência de memória :: INSTÁVEL [40%]");
             print("out", "Presença física :: DETECTADA EM MÚLTIPLOS ######");
             print("error", "Status geral :: VIVO | DESCALIBRADO | PRESO NA ZONA T-NULL");
-            print("note", "…eu ainda… aqui— mas… n-ão… por… mu-");
+            print("note", "isso n- fala sobre mim... fala?");
             return;
         }
 
-        // comando não reconhecido
-        print("error", `Comando não reconhecido ou incorreto: '${cmd}'`);
+    if (lower === "usb upload" || lower === "usb upload") {
+        if (!loggedIn) return print("error", "Acesso negado. Faça login.");
+
+        print("success", "Dispositivo detectado...");
+        print("progress", "Inicializando leitura de diretório...");
+        print("success", "Leitura concluída");
+
+        setTimeout(() => {
+            print("progress", "Copiando arquivos...");
+
+            setTimeout(() => {
+                print("success", "Upload concluído.");
+                print("note", "por qu- voc- troux- isso pra cá?");
+            }, 1900);
+
+        }, 1200);
+
+        return;
+    }
+
+    // comando não reconhecido
+    print("error", `Comando não reconhecido ou incorreto: '${cmd}'`);
     } catch (err) {
         safeLogError(err);
     }
-}
+} // <-- FECHAMENTO CORRETO DA handleCommand
+
 
 function handleOpen(folder) {
     try {
