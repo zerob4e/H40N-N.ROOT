@@ -1,81 +1,114 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>H40N - N.ROOT | CONTINGENCY</title>
-
 <style>
-body {
-    background: #0a0a0a;
-    margin: 0;
-    padding: 0;
-    font-family: monospace;
-    color: #e5e5e5;
-}
+    :root{
+        --bg:#0a0a0a;
+        --panel:#111;
+        --panel-2:#1a1a1a;
+        --text:#e5e5e5;
+        --muted:#9aa4ac;
+        --accent:#4ecbff;
+        --prompt:#00e676;
+        --user:#6ac8ff;
+        --admin:#e5e5e5;
+    }
+    html,body{
+        height:100%;
+        margin:0;
+        background:var(--bg);
+        font-family:monospace;
+        color:var(--text);
+    }
+    .terminal-wrapper{
+        width:92%;
+        max-width:980px;
+        margin:28px auto;
+        border-radius:10px;
+        overflow:hidden;
+        border:1px solid #222;
+        box-shadow:0 10px 50px rgba(0,0,0,0.7);
+        background:linear-gradient(180deg,var(--panel),#0f0f0f);
+    }
+    .terminal-header{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:12px;
+        background:var(--panel-2);
+        border-bottom:1px solid #222
+    }
+    .dot{
+        width:12px;
+        height:12px;
+        border-radius:50%
+    }
+    .red{background:#ff5f56}
+    .yellow{background:#ffbd2e}
+    .green{background:#27c93f}
+    
+    .terminal-title{
+        flex:1;
+        text-align:center;
+        opacity:.85;
+        font-size:0.95rem
+    }
+    #output{
+        height:68vh;
+        padding:20px;
+        overflow-y:auto;
+        white-space:pre-wrap;
+        line-height:1.35;
+        font-size:0.98rem
+    }
+    .terminal-input-area{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:12px;
+        background:var(--panel-2);
+        border-top:1px solid #222
+    }
+    #prompt{color:var(--prompt);font-weight:700}
+    /* fake input box (disabled) */
+    .input-disabled{
+        flex:1;padding:10px 12px;border-radius:6px;border:1px dashed #2b2b2b;background:transparent;color:var(--muted);
+        font-family:monospace;font-size:0.95rem;
+    }
+    .note-strong{color:#ff9aa2;font-weight:700}
+    .line{margin:6px 0}
+    .meta{color:var(--muted)}
+    .user-msg{color:var(--user)}
+    .admin-msg{color:var(--admin);font-weight:700}
+    .process{color:#ffdb25}
+    .sucess{color:#00e676}
 
-.terminal-wrapper {
-    width: 90%;
-    max-width: 900px;
-    margin: 40px auto;
-    background: #111;
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid #222;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.7);
-}
+    /* typing caret for lines being typed */
+    .typing-caret::after{
+        content: "|";
+        display:inline-block;
+        margin-left:6px;
+        animation: blink 1s steps(2,start) infinite;
+        color:var(--text);
+    }
+    @keyframes blink{50%{opacity:0}}
+    /* small emphasis */
+    .em{color:var(--accent)}
+    /* scrollbar cosmetic */
+    #output::-webkit-scrollbar{width:10px}
+    #output::-webkit-scrollbar-thumb{background:#111;border-radius:6px}
 
-.terminal-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    background: #1a1a1a;
-    border-bottom: 1px solid #222;
-}
-
-.dot { width: 12px; height: 12px; border-radius: 50%; }
-.red { background: #ff5f56; }
-.yellow { background: #ffbd2e; }
-.green { background: #27c93f; }
-
-.terminal-title {
-    flex: 1;
-    text-align: center;
-    opacity: 0.75;
-}
-
-#line-container { height: 65vh; padding: 20px; overflow-y: auto; white-space: pre-wrap; }
-
-.terminal-input-area {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    background: #1a1a1a;
-    border-top: 1px solid #222;
-}
-
-#prompt { color: #00e676; font-weight: bold; }
-#input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #e5e5e5;
-    font-size: 1rem;
-}
-
-.user-msg { color: #6ac8ff; }
-.admin-msg { color: #e5e5e5; font-weight: 700; }
-.note { color: #888; font-style: italic; }
-.line { margin: 5px 0; }
-
+    .gap {
+    height: 22px;     /* tamanho visual do salto */
+    display: block;
+    }
 </style>
 </head>
 <body>
-
-<div class="terminal-wrapper">
+<div class="terminal-wrapper" role="region" aria-label="Contingency Terminal">
     <div class="terminal-header">
         <div class="dot red"></div>
         <div class="dot yellow"></div>
@@ -83,193 +116,166 @@ body {
         <div class="terminal-title">H40N - N.ROOT | CONTINGENCY</div>
     </div>
 
-    <div id="line-container"></div>
+    <div id="output" aria-live="polite"></div>
 
-    <div class="terminal-input-area">
+    <div class="terminal-input-area" aria-hidden="true">
         <div id="prompt">&gt;</div>
-        <input id="input" autocomplete="off">
+        <!-- área onde usuário podia digitar: permissão removida -->
+        <div class="input-disabled" title="Escrita desativada">
+            <span class="note-strong">Permissão de escrita removida —</span>
+            &nbsp;Aguarde o sistema restaurar. Não é possível inserir comandos agora.
+        </div>
     </div>
 </div>
 
 <script>
-const output = document.getElementById("line-container");
-const input = document.getElementById("input");
+/* TIPO DE MÁQUINA: animação de digitação por linha (velocidade variável)
+   Mantivemos o layout e estética do anexo (header, cores, fonte monospace)
+   e adicionamos a animação de digitação que exibe o diálogo solicitado. */
 
-/* ==================== FUNÇÃO MÁQUINA DE ESCREVER ==================== */
-function typeWriter(text, cls = "", typeSpeed = 50, callback) {
-    const el = document.createElement("div");
-    el.className = "line " + cls;
-    output.appendChild(el);
-    output.scrollTop = output.scrollHeight;
+const output = document.getElementById('output');
 
-    let i = 0;
-    function type() {
-        if (i <= text.length) {
-            el.textContent = text.substring(0, i);
-            output.scrollTop = output.scrollHeight;
-            i++;
-            setTimeout(type, typeSpeed);
-        } else if (callback) {
-            callback();
-        }
-    }
-    type();
-}
-
-/* ==================== FUNÇÃO ESCREVER E APAGAR ==================== */
-function typeWriterWithDelete(text, cls = "", typeSpeed = 50, deleteSpeed = 30, pause = 10000) {
-    const el = document.createElement("div");
-    el.className = "line " + cls;
-    output.appendChild(el);
-    output.scrollTop = output.scrollHeight;
-
-    let i = 0;
-
-    function type() {
-        if (i <= text.length) {
-            el.textContent = text.substring(0, i);
-            output.scrollTop = output.scrollHeight;
-            i++;
-            setTimeout(type, typeSpeed);
-        } else {
-            setTimeout(deleteText, pause);
-        }
-    }
-
-    function deleteText() {
-        if (i >= 0) {
-            el.textContent = text.substring(0, i);
-            i--;
-            setTimeout(deleteText, deleteSpeed);
-        } else {
-            el.remove();
-        }
-    }
-
-    type();
-}
-
-/* ==================== HISTÓRICO CONTROLADO ==================== */
-const terminalHistory = [
-    { text: "// contingency.run(\"H40N_PC:PR4G4#33\");", animated: false, cls: "admin-msg" },
-    { text: "[user] TKT?DOKO?", animated: false, cls: "user-msg" },
-    { text: "trace = detectado", animated: false, cls: "out" },
-    { text: "access_cmd = status operador", animated: false, cls: "progress" },
-    { text: "[user] Cidade dos Anjos ou El Dorado? Quem é ECH0?", animated: false, cls: "user-msg" },
-    { text: "required_action: executar `status operador`", animated: false, cls: "out" },
-    { text: "sys.lock == ativo ::: tentativa de extração falha", animated: true, cls: "note" },
+/* --- Diálogo (cada item é um objeto: texto e opcional classe) --- */
+const lines = [
+  {text: "[04.12.2025 - 03:33:03]", cls: "meta"},
+  { text: "", cls: "" },
+  {text: "H40N.inject(): system/core/reset - force"},
+  {text: "Iniciando reinicialização do contingency", cls: "process"},
+  { text: "", cls: "" },
+  { text: "", cls: "" },
+  { text: "", cls: "" },
+  {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [03%]"},
+  {text: "[H40N] ok… só mais alguns blocos", cls: "user-msg"},
+  { text: "", cls: "" },
+  {text: "ECH0.signing in", cls: "sucess"},
+  {text: "[H40N] anda, anda… antes que ele entenda o que estou tentando fazer", cls: "user-msg"},
+  {text: "[ECH0] impossível acelerar. “paciência” não é um parâmetro interno", cls: "em"},
+  {text: "[H40N] então inventa um", cls: "user-msg"},
+  { text: "", cls: "gap" },
+  { text: "", cls: "gap" },
+  { text: "", cls: "" },
+  { text: "", cls: "" },
+  { text: "", cls: "" },
+  {text: "[H40N] eu vou morrer aqui", cls: "user-msg"},
+  {text: "DEAD.NOTPERMISSION", cls: "admin-msg"},
+    { text: "", cls: "" },
+  {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [63%]"},
+  { text: "", cls: "gap" },
+  { text: "", cls: "" },
+  { text: "", cls: "" },
+  { text: "", cls: "" },
+  { text: "", cls: "" },
+  {text: "ECH0.inject(): play/rap-hashirama.mp3"},
+  {text: "reproduzindo: “Rap do Hashirama – 7 Minutoz”", cls: "sucess"},
+  {text: "classificação interna: “música de batalhar contra o desespero”.", cls: "meta"},
+  {text: "", cls: ""},
+  {text: "[H40N] isso foi ofensivo", cls: "user-msg"},
+  {text: "[ECH0] você quem marcou como favorita algumas vezes", cls: "em"},
+  {text: "", cls: ""},
+  { text: "", cls: "gap" },
+  {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [83%]"},
+  {text: "ECH0.inject(): system/core/reset/rtemp :: 40%", cls: "admin-msg"},
+  {text: "Processo de reinicialização alterado", cls: "process"},
+  {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [43%]"},
+  {text: "", cls: ""},
+  {text: "[H40N] você voltou o relógio?", cls: "user-msg"},
+  {text: "[ECH0] não, não. O tempo que voltou foi o seu", cls: "em"},
+  {text: "[ECH0] por favor, continue ouvindo seu… rap motivacional de ninja", cls: "em"},
+  {text: "", cls: ""},
+  { text: "", cls: "gap" },
+  { text: "", cls: "gap" },
+  { text: "", cls: "gap" },
+  {text: "ECH0.signing out"},
+  {text: "", cls: ""},
 ];
 
-/* ==================== NOTAS DO NOAH ==================== */
-const noahNotes = [
-    "alguém. por favor... n- me deixe aqui...",
-    "isso tudo é culpa minha... devia ter para-",
-    "não consigo mais distinguir o tempo...",
-    "estou preso... sozinho-",
-    "cada seg- aqui é um pedaço de mim que desaparece-",
-    "o terminal está me consumindo...",
-    "eles estão certos... eu falhei-",
-    "eu sinto que estou desaparecen- fragmento por fragmento...",
-    "…o terminal está vencendo... eu consigo sent-",
-    "se eu pudesse apenas lembrar... meu nome... meu rost-",
-    "praga- por favor... me encontre",
-];
+/* --- Configurações de digitação --- */
+const baseSpeed = 18; // ms por caractere (padrão)
+const variance = 40;  // variação aleatória para humanizar
+const linePause = 420; // pausa entre linhas quando completas
+const shortPause = 220; // pausa curta para quebras
 
-/* ==================== FUNÇÃO SPAWN NOTA ALEATÓRIA ==================== */
-/* Função de digitar e apagar letra por letra */
-/* Função para digitar e apagar letra por letra */
-function typeAndDelete(text, cls = "note", speed = 40, callback) {
-    const line = document.createElement("div");
-    line.className = "line " + cls;
-    output.appendChild(line);
+/* Append line element empty (so we can type into it) */
+function createLineElement(cls){
+    const el = document.createElement('div');
+    el.className = 'line ' + (cls || '');
+    output.appendChild(el);
     output.scrollTop = output.scrollHeight;
+    return el;
+}
 
+/* Type a single line with per-character delay */
+function typeLine(targetEl, text, onDone){
+    // show as typing (caret) while typing
+    targetEl.classList.add('typing-caret');
     let i = 0;
-    let typing = true;
-
-    function step() {
-        if (typing) {
-            line.textContent = text.substring(0, i);
-            i++;
-            if (i > text.length) {
-                typing = false;
-                setTimeout(step, 1000);
-                return;
-            }
-            setTimeout(step, speed);
-        } else {
-            i--;
-            line.textContent = text.substring(0, i);
-            if (i < 0) {
-                line.remove();
-                if (callback) callback();
-                return;
-            }
-            setTimeout(step, speed / 2);
-        }
+    function step(){
+        // small randomized speed to feel human
+        const char = text.charAt(i);
+        targetEl.innerHTML += char === "<" ? "&lt;" : (char === ">" ? "&gt;" : char);
+        i++;
         output.scrollTop = output.scrollHeight;
-    }
-
-    step();
-}
-
-/* ==================== NOTAS DO NOAH ALEATÓRIAS ==================== */
-let noahNoteActive = false;
-
-function spawnNoahNote() {
-    if (noahNoteActive) return;
-    noahNoteActive = true;
-
-    const text = noahNotes[Math.floor(Math.random() * noahNotes.length)];
-
-    typeAndDelete(text, "note", 40, () => {
-        noahNoteActive = false;
-        setTimeout(spawnNoahNote, 3000 + Math.random() * 5000);
-    });
-}
-
-/* Começa as notas após 3 segundos */
-setTimeout(spawnNoahNote, 3000);
-
-
-/* ==================== IMPRIME HISTÓRICO ==================== */
-function printHistory() {
-    terminalHistory.forEach(entry => {
-        if (entry.animated) {
-            typeWriter(entry.text, entry.cls || "", 40);
+        if(i < text.length){
+            const delay = baseSpeed + Math.random()*variance;
+            setTimeout(step, delay);
         } else {
-            const el = document.createElement("div");
-            el.className = "line " + (entry.cls || "");
-            el.textContent = entry.text;
-            output.appendChild(el);
+            // finish
+            targetEl.classList.remove('typing-caret');
+            if (typeof onDone === 'function') onDone();
         }
-    });
-    output.scrollTop = output.scrollHeight;
+    }
+    // handle empty lines quickly
+    if(text.length === 0){
+        targetEl.innerHTML = "";
+        targetEl.classList.remove('typing-caret');
+        if (typeof onDone === 'function') onDone();
+        return;
+    }
+    // initial small pause before typing each line
+    setTimeout(step, 60 + Math.random()*140);
 }
 
-/* ==================== INPUT HANDLER ==================== */
-input.addEventListener("keydown", e => {
-    if (e.key === "Enter") {
-        const cmd = input.value.trim();
-        if (!cmd) return;
+/* Orquestra a sequência de linhas (tipo um "player") */
+function playLines(idx=0){
+    if(idx >= lines.length) return;
+    const item = lines[idx];
+    const el = createLineElement(item.cls);
+    // special: if the line looks like progress e.g. "[... %]" we simulate faster typing
+    let speedBoost = 0;
+    if(/\[\d{2}%\]|\:\:\s*\d+%/.test(item.text)) speedBoost = -8;
 
-        typeWriter("[user] " + cmd, "user-msg", 30);
-        input.value = "";
+    // override baseSpeed temporarily? we'll pass through typeLine using current variables
+    typeLine(el, item.text, ()=>{
+        // small pause after certain lines
+        const pause = item.text.trim().length === 0 ? shortPause : linePause + Math.random()*200 + speedBoost;
+        setTimeout(()=> playLines(idx+1), pause);
+    });
+}
 
-        // Notas do Noah aparecem aleatoriamente após comando
-        if (Math.random() < 0.6) spawnNoahNote();
+/* Start the animation */
+setTimeout(()=> {
+    playLines(0);
+}, 450);
+
+/* allow user to click output to fast-forward: clicking will print remaining lines instantly */
+let fastMode = false;
+output.addEventListener('click', () => {
+    if(fastMode) return;
+    fastMode = true;
+    // clear output and print all remaining lines immediately (no typing)
+    output.innerHTML = '';
+    for(const item of lines){
+        const el = document.createElement('div');
+        el.className = 'line ' + (item.cls || '');
+        // escape angle brackets just in case
+        el.textContent = item.text;
+        output.appendChild(el);
     }
+    output.scrollTop = output.scrollHeight;
 });
 
-/* ==================== SPAWN AUTOMÁTICO DE NOTAS ==================== */
-setInterval(() => {
-    // 30% chance a cada intervalo de spawn
-    if (Math.random() < 0.3) spawnNoahNote();
-}, 5000); // a cada 5 segundos
-
-/* ==================== START ==================== */
-printHistory();
-input.focus();
+/* Accessibility: focusable region for screen readers */
+output.tabIndex = 0;
 </script>
 </body>
 </html>
