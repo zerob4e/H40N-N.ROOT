@@ -89,7 +89,7 @@
     .out { color: #cccccc; }
     .error { color: #ff4d4d; }
     .success { color: #00e676; }
-    .progress { color: #ffe100; }
+    .progress { color: #ffe100; transition: opacity 0.6s; }
     .note { color: #bdbdbd; opacity: 1; transition: opacity 0.6s; }
 </style>
 </head>
@@ -153,6 +153,7 @@
 /* -------------------------
    Variáveis principais
 -------------------------*/
+
 let commandHistory = [];
 let historyIndex = -1;
 
@@ -173,6 +174,9 @@ const input = document.getElementById("input");
 let queue = [];
 let processing = false;
 let delayAfterProgress = false;
+
+/* guarda a última linha progress (se existir) */
+let lastProgressLine = null;
 
 /* função segura para logar erros JS no terminal */
 function safeLogError(err) {
@@ -244,8 +248,33 @@ function typeWrite(type, text, speed = 20, callback) {
         const line = document.createElement("div");
         line.className = type || "out";
         line.setAttribute("role", "log");
-        output.appendChild(line);
+
+        // Se existe uma progress visível, substituir a posição dela pela nova linha
+        if (lastProgressLine && lastProgressLine.parentNode === output) {
+            try {
+                // inserir a nova linha no lugar da progress (replaceChild)
+                // mantemos a referência antiga para remover/transicionar se quiser
+                output.replaceChild(line, lastProgressLine);
+                // limpamos a referência imediatamente — a progress foi substituída
+                lastProgressLine = null;
+            } catch (e) {
+                // fallback: se replace falhar, usar append
+                output.appendChild(line);
+            }
+        } else {
+            output.appendChild(line);
+        }
+
+        // small fade-in para suavizar a substituição
+        line.style.opacity = "0";
+        line.style.transition = "opacity 0.18s ease";
+        // garantir scroll para o final (caso append usado)
         output.scrollTop = output.scrollHeight;
+
+        // delay mínimo antes de mostrar para permitir o layout estabilizar
+        setTimeout(() => {
+            try { line.style.opacity = "1"; } catch(e){ /* ignore */ }
+        }, 20);
 
         function writeChar() {
             try {
@@ -253,33 +282,40 @@ function typeWrite(type, text, speed = 20, callback) {
                     line.textContent = text.slice(0, i);
                     output.scrollTop = output.scrollHeight;
                     i++;
-                    // velocidade mínima
                     const wait = Math.max(1, speed);
                     setTimeout(writeChar, wait);
                 } else {
-                    line.textContent = text; // garante linha completa
+                    line.textContent = text;
+
+                    /* --- marca a linha progress como a última progress visível --- */
+                    if (type === "progress") {
+                        lastProgressLine = line; // marca para ser substituída pela próxima mensagem
+                        // garantir que a progress esteja totalmente visível
+                        line.style.opacity = "1";
+                    }
+
+                    /* regra das notes (fade e remoção) */
                     if (type === "note") {
-                        // note fica visível por 10s, depois some
                         setTimeout(() => {
-                            try {
-                                line.style.opacity = "0";
-                                setTimeout(() => {
-                                    if (line && line.parentNode) line.parentNode.removeChild(line);
-                                }, 600);
-                            } catch (e) { /* ignore */ }
+                            line.style.opacity = "0";
+                            setTimeout(() => {
+                                if (line && line.parentNode) line.parentNode.removeChild(line);
+                            }, 600);
                         }, 1000);
                     }
-                    if (typeof callback === "function") callback();
+
+                    if (callback) callback();
                 }
             } catch (err) {
                 safeLogError(err);
-                if (typeof callback === "function") callback();
+                if (callback) callback();
             }
         }
         writeChar();
+
     } catch (err) {
         safeLogError(err);
-        if (typeof callback === "function") callback();
+        if (callback) callback();
     }
 }
 
@@ -496,7 +532,7 @@ function handleCommand(raw) {
     if (lower === "usb upload" || lower === "usb upload") {
         if (!loggedIn) return print("error", "Acesso negado. Faça login.");
 
-        print("success", "Dispositivo detectado...");
+        print("success", "Dispositivo detectado");
         print("progress", "Inicializando leitura de diretório...");
         print("success", "Leitura concluída");
 
