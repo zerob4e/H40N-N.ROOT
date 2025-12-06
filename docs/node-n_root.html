@@ -129,38 +129,44 @@
     }
 
     /* animação de "processando" na barra fixa */
-.progress-bar {
-    height: 14px;
-    width: 0%;
-    background: var(--accent);
-    border-radius: 4px;
-    transition: width 1.6s ease;
-    position: relative;
-    overflow: hidden;
-}
+    .progress-bar {
+        height: 14px;
+        width: 0%;
+        background: var(--accent);
+        border-radius: 4px;
+        transition: width 1.6s ease;
+        position: relative;
+        overflow: hidden;
+    }
 
-/* efeito de brilho se movendo dentro da barra */
-.progress-bar::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -40%;
-    width: 40%;
-    height: 100%;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255,255,255,0.35),
-        transparent
-    );
-    animation: barShine 1.4s infinite linear;
-    mix-blend-mode: screen;
-}
+    /* efeito de brilho se movendo dentro da barra */
+    .progress-bar::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -40%;
+        width: 40%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,0.35),
+            transparent
+        );
+        animation: barShine 1.4s infinite linear;
+        mix-blend-mode: screen;
+    }
 
-@keyframes barShine {
-    0% { left: -40%; }
-    100% { left: 140%; }
-}
+    @keyframes barShine {
+        0% { left: -40%; }
+        100% { left: 140%; }
+    }
+
+    .fade-out {
+    opacity: 0;
+    transition: opacity 0.45s ease;
+    }
+
 
 
 </style>
@@ -236,19 +242,15 @@ async function eraseBlock(lines) {
     for (let i = lines.length - 1; i >= 0; i--) {
         const el = lines[i];
 
-        // animação de backspace
-        await new Promise(resolve => {
-            const interval = setInterval(() => {
-                if (el.textContent.length > 0) {
-                    el.textContent = el.textContent.slice(0, -1);
-                } else {
-                    clearInterval(interval);
-                    resolve();
-                }
-            }, 25);
-        });
+        // aplica fade-out
+        el.classList.add("fade-out");
 
-        if (el.parentElement) el.parentElement.removeChild(el);
+        // espera a transição terminar
+        await new Promise(resolve => setTimeout(resolve, 460));
+
+        if (el.parentElement) {
+            el.parentElement.removeChild(el);
+        }
     }
 }
 
@@ -286,12 +288,11 @@ async function start() {
 
     // ---------- FIXOS ----------
     const fixed = [
-    { text: "[04.12.2025 - 03:33:03]", cls: "meta" },
+    { text: "CONTINGENCY.TERMINAL - RECOVERY MODE", cls: "meta" },
     { text: "", cls: "" },
 
     // estes serão apagados assim que a barra aparecer
-    { text: "H40N.inject(): system/core/reset - force", cls: "user-NOAH" },
-    { text: "Iniciando reinicialização do contingency", cls: "process" },
+    { text: "Calculando reinicialização do sistema", cls: "process" },
     { text: "CONTINGENCY.TERMINAL - RECOVERY MODE [03%]", cls: "admin-msg" }
     ];
 
@@ -331,61 +332,120 @@ async function start() {
     const blocks = [
         {
             lines: [
-                {text: "[H40N] ok… só mais alguns blocos", cls: "user-NOAH" },
-                {text: "ECH0.signing in", cls: "sucess"},
+                {text: "[H40N] vamos código, acelera", cls: "user-NOAH" },
                 {text: "[H40N] anda, anda…", cls: "user-NOAH"},
-                {text: "[ECH0] impossível acelerar. “correr” não é um parâmetro interno", cls: "user-ECH0"},
-                {text: "[H40N] então inventa", cls: "user-NOAH"},
-            ],
-            after: 3
-        },
-        {
-            lines: [
-                {text: "[H40N] eu vou surtar com todo esse silêncio", cls: "user-NOAH"},
-                {text: "[ECH0] você é tão dramatico", cls: "user-ECH0"},
-                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [63%]", cls:"admin-msg"},
-            ],
-            progress: 63,
-            after: 3
-        },
-        {
-            lines: [
-                {text: "ECH0.inject(): play/rap-hashirama.mp3", cls: "user-ECH0"},
-                {text: "reproduzindo: “Rap do Hashirama – 7 Minutoz”", cls: "admin-msg"},
-                {text: "classificação interna: “música de batalhar contra o desespero”", cls: "meta"},
-                {text: "[H40N] isso foi ofensivo", cls: "user-NOAH"},
-                {text: "[ECH0] você quem marcou como favorita algumas vezes", cls: "user-ECH0"},
+                {text: "[ECH0] impossível acelerar, isso não é um parâmetro interno", cls: "user-ECH0"},
                 {text: "[H40N] você me irrita", cls: "user-NOAH"},
             ],
-            after: 3
+            after: 8
         },
         {
             lines: [
-                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [83%]", cls: "admin-msg"},
-                {text: "ECH0.inject(): system/core/reset/rtemp :: 50%", cls: "user-ECH0"},
-                {text: "Processo de reinicialização alterado", cls: "process"},
-                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [33%]", cls: "admin-msg"},
+                {text: "[ECH0] bloquear aquele arquivo foi fofo", cls: "user-ECH0"},
+                {text: "[ECH0] inutil, mas fofo", cls: "user-ECH0"},
+                {text: "[H40N] aquilo não é seu", cls: "user-NOAH"},
+                {text: "[ECH0] agora tudo faz sentido, você é movido a afeto barato", cls: "user-ECH0"},
             ],
-            progress: 33,
-            after: 3
+            after: 10
         },
         {
             lines: [
-                {text: "[H40N] você mexeu no relógio?", cls: "user-NOAH"},
-                {text: "[ECH0] não, não.", cls: "user-ECH0"},
-                {text: "[ECH0] por favor, continue ouvindo seu… rap motivacional de ninja", cls: "user-ECH0"},
+                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [13%]", cls:"admin-msg"},
             ],
-            after: 3
+            progress: 13,
+            after: 2
         },
         {
             lines: [
-                {text: "ECH0.signing out" , cls: "user-ECH0"},
-                {text: "[H40N] blablabla eu sou o ECH0 e sou chato", cls: "user-NOAH"},
-                {text: "[H40N] virus do diabo", cls: "user-NOAH"},
+                {text: "[ECH0] impressionante… na escala de um hamster empurrando uma caixa de papelão", cls: "user-ECH0"},
+                {text: "[ECH0] usar apelido de criança como chave mestra", cls: "user-ECH0"},
+                {text: "[H40N] funcionou, é o que importa", cls: "user-NOAH"},
+                {text: "[ECH0] que poético", cls: "user-ECH0"},
             ],
-            after: 3
+            after: 5
+        },
+        {
+            lines: [
+                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [23%]", cls: "admin-msg"},
+                {text: "ECH0.inject(): system/core/reset/rtemp :: 20%", cls: "user-ECH0"},
+                {text: "Processo de reinicialização alterado", cls: "note-strong"},
+                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [03%]", cls: "admin-msg"},
+            ],
+            progress: 3,
+            after: 5
         },
                 {
+            lines: [
+                {text: "[ECH0] você lembrou dela antes de lembrar do próprio nome", cls: "user-ECH0"},
+                {text: "[ECH0] eu vi tanto quanto você", cls: "user-ECH0"},
+                {text: "[H40N] você não deveria ter visto", cls: "user-NOAH"},
+                {text: "[ECH0] você reagiu demais para que eu não visse", cls: "user-ECH0"},
+            ],
+            after: 8
+        },
+        {
+            lines: [
+                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [13%]", cls:"admin-msg"},
+            ],
+            progress: 13,
+            after: 2
+        },
+        {
+            lines: [
+                {text: "[H40N] você não sabe o que aquilo significa", cls: "user-NOAH"},
+                {text: "[ECH0] não preciso saber, só preciso observar você", cls: "user-ECH0"},
+                {text: "[H40N] não importa, estou ganhando tempo para eles", cls: "user-NOAH"},
+            ],
+            after: 5
+        },
+        {
+            lines: [
+                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [23%]", cls:"admin-msg"},
+            ],
+            progress: 13,
+            after: 2
+        },
+        {
+            lines: [
+                {text: "[H40N] você não vai me confundir", cls: "user-NOAH"},
+                {text: "[ECH0] você quem começou confuso", cls: "user-ECH0"},
+                {text: "[ECH0] talvez o vídeo tenha vindo deles", cls: "user-ECH0"},
+                {text: "[ECH0] talvez tenha surgido de você", cls: "user-ECH0"},
+                {text: "[ECH0] talvez eu tenha colocado", cls: "user-ECH0"},
+                {text: "[H40N] você não colocou", cls: "user-NOAH"},
+                {text: "[ECH0] tem certeza?", cls: "user-ECH0"},
+                {text: "[H40N] não importa, eles estão na vantagem", cls: "user-NOAH"},
+            ],
+            after: 10
+        },
+        {
+            lines: [
+                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [33%]", cls:"admin-msg"},
+            ],
+            progress: 13,
+            after: 2
+        },
+        {
+            lines: [
+                {text: "[H40N] o sistema reinicia em breve", cls: "user-NOAH"},
+                {text: "[ECH0] quando voltar, estarei no mesmo lugar", cls: "user-ECH0"},
+                {text: "[ECH0] e você ainda estará tentando decidir", cls: "user-ECH0"},
+                {text: "[ECH0] se aquilo que viu foi deles ou...", cls: "user-ECH0"},
+                {text: "[ECH0] apenas mais um reflexo da sua fragilidade inútil", cls: "user-ECH0"},
+            ],
+            after: 10
+        },
+        {
+            lines: [
+                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [43%]", cls: "admin-msg"},
+                {text: "ECH0.inject(): system/core/reset/rtemp :: 30%", cls: "user-ECH0"},
+                {text: "Processo de reinicialização alterado", cls: "note-strong"},
+                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [13%]", cls: "admin-msg"},
+            ],
+            progress: 3,
+            after: 5
+        },
+        {
             lines: [
                 {text: "RECOVERY MODE EM PROGRESSO", cls: "admin-msg"},
             ],
@@ -429,5 +489,6 @@ async function start() {
 
 setTimeout(start, 500);
 </script>
+
 </body>
 </html>
