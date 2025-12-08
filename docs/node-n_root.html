@@ -88,7 +88,7 @@
     .line{margin:6px 0}
     .meta{color:var(--muted)}
     .user-NOAH{color:#3ee9e9}
-    .user-ECH0{color:#17acec}
+    .user-ECH0{color:#ffa200}
     .admin-msg{color:var(--admin)}
     .process{color:#ffdb25}
     .sucess{color:#00e676}
@@ -167,8 +167,6 @@
     transition: opacity 0.45s ease;
     }
 
-
-
 </style>
 </head>
 <body>
@@ -198,31 +196,62 @@ let progressBarFixed = null;
 let hasShownFirstBar = false;
 
 // ----- FUNÇÃO: cria barra fixa ou atualiza -----
-function updateFixedProgress(percent) {
+// -----------------------------
+// SISTEMA DE PROGRESSO AUTOMÁTICO
+// -----------------------------
+let progressValue = 0;  // valor inicial da barra
+let autoProgressInterval = null;
+
+// cria/atualiza a barra fixa
+function updateFixedProgress(val) {
+    progressValue = Math.max(0, Math.min(val, 99)); // nunca chega a 100
+
     if (!progressBarFixed) {
         progressBarFixed = document.createElement("div");
         progressBarFixed.className = "progress-bar-container";
 
         const bar = document.createElement("div");
         bar.className = "progress-bar";
-        bar.style.width = percent + "%";
+        bar.style.width = progressValue + "%";
 
         const label = document.createElement("div");
         label.className = "progress-label";
-        label.textContent = `Restaurando sistema... ${percent}%`;
+        label.textContent = `Restaurando sistema... ${progressValue}%`;
 
         progressBarFixed.appendChild(bar);
         progressBarFixed.appendChild(label);
-
         output.appendChild(progressBarFixed);
     } else {
         const bar = progressBarFixed.querySelector(".progress-bar");
         const label = progressBarFixed.querySelector(".progress-label");
 
-        bar.style.width = percent + "%";
-        label.textContent = `Restaurando sistema... ${percent}%`;
+        bar.style.width = progressValue + "%";
+        label.textContent = `Restaurando sistema... ${progressValue}%`;
     }
 }
+
+// inicia subida automática de 1% a cada 10s
+function startAutoProgress() {
+    if (autoProgressInterval) return; 
+
+    autoProgressInterval = setInterval(() => {
+        if (progressValue < 99) {
+    updateFixedProgress(progressValue + 1);
+    } else {
+    triggerECH0Reset(); // chama a quebra do ECH0
+    }
+
+    }, 2000);
+}
+
+// reduz porcentagem quando ECH0.inject aparece
+function applyECH0Injection(amount) {
+    updateFixedProgress(progressValue - amount);
+}
+
+// chama depois de criar a barra inicial
+startAutoProgress();
+
 
 // ----- FUNÇÃO: remove linhas ENTRE o índice 8 até antes da barra -----
 // (mantive essa função, não usada se você prefere backspace; deixei por segurança)
@@ -253,6 +282,49 @@ async function eraseBlock(lines) {
         }
     }
 }
+
+// ============================
+//   FUNÇÃO: RESET DO ECH0
+// ============================
+async function triggerECH0Reset() {
+
+    // impede progressão automática enquanto ECH0 fala
+    clearInterval(autoProgressInterval);
+    autoProgressInterval = null;
+
+    // limpa qualquer bloco que ainda esteja na tela (mantém só a barra)
+    while (output.lastChild && output.lastChild !== progressBarFixed) {
+        output.removeChild(output.lastChild);
+    }
+
+    // diálogo do ECH0 quando chega a 99%
+    const lines = [
+        { text: "[ECH0] você achou que ia terminar?", cls: "user-ECH0" },
+        { text: "[ECH0] 99% é só o bastante pra você sentir esperança", cls: "user-ECH0" },
+        { text: "[ECH0] ...e o perfeito momento para eu tirar isso de você", cls: "user-ECH0" },
+        { text: "ECH0.inject(): system/core/reset/rtemp :: 99%", cls: "user-ECH0" }
+    ];
+
+    let els = [];
+
+    for (let item of lines) {
+        const el = appendLine(item.cls);
+        els.push(el);
+        await typeLine(el, item.text);
+    }
+
+    await new Promise(r => setTimeout(r, 1400));
+
+    // apaga as falas
+    await eraseBlock(els);
+
+    // zera a barra e recomeça o ciclo
+    updateFixedProgress(0);
+
+    // retoma a subida automática
+    startAutoProgress();
+}
+
 
 // ----- FUNÇÃO: cria uma linha -----
 function appendLine(cls = "") {
@@ -292,8 +364,7 @@ async function start() {
     { text: "", cls: "" },
 
     // estes serão apagados assim que a barra aparecer
-    { text: "Calculando reinicialização do sistema", cls: "process" },
-    { text: "CONTINGENCY.TERMINAL - RECOVERY MODE [03%]", cls: "admin-msg" }
+    { text: "Calculando reinicialização do sistema", cls: "process" }
     ];
 
 
@@ -331,126 +402,88 @@ async function start() {
 
     const blocks = [
         {
-            lines: [
-                {text: "[H40N] vamos código, acelera", cls: "user-NOAH" },
-                {text: "[H40N] anda, anda…", cls: "user-NOAH"},
-                {text: "[ECH0] impossível acelerar, isso não é um parâmetro interno", cls: "user-ECH0"},
-                {text: "[H40N] você me irrita", cls: "user-NOAH"},
-            ],
-            after: 8
+        lines: [
+            {text: "[ECH0] você hesitou quando viu o nome dela no diretório", cls:"user-ECH0"},
+            {text: "[H40N] não começa com isso", cls:"user-NOAH"},
+            {text: "[ECH0] hesitação é uma forma de entregar acesso privilegiado", cls:"user-ECH0"},
+            {text: "[H40N] não foi hesitação. foi...", cls:"user-NOAH"},
+            {text: "[ECH0] para mim pareceu medo", cls:"user-ECH0"},
+        ],
+        after: 7
         },
         {
             lines: [
                 {text: "[ECH0] bloquear aquele arquivo foi fofo", cls: "user-ECH0"},
                 {text: "[ECH0] inutil, mas fofo", cls: "user-ECH0"},
                 {text: "[H40N] aquilo não é seu", cls: "user-NOAH"},
-                {text: "[ECH0] agora tudo faz sentido, você é movido a afeto barato", cls: "user-ECH0"},
+                {text: "[ECH0] tudo aqui é meu, você garantiu isso", cls: "user-ECH0"},
             ],
             after: 10
         },
         {
-            lines: [
-                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [13%]", cls:"admin-msg"},
-            ],
-            progress: 13,
-            after: 2
+        lines: [
+            {text: "[H40N] já falei pra você não mexer ali", cls: "user-NOAH"},
+            {text: "[ECH0] claro. vou fingir que isso funciona comigo", cls: "user-ECH0"},
+            {text: "[H40N] eu bloqueei aquela pasta por um motivo", cls: "user-NOAH"},
+            {text: "[ECH0] bloqueou mal. você tremeu antes de escrever a senha", cls: "user-ECH0"},
+            {text: "[H40N] não tremi", cls:"user-NOAH"},
+            {text: "[ECH0] tremor ≠ erro. mas no seu caso foi os dois.", cls:"user-ECH0"}
+        ],
+        after: 7
         },
         {
-            lines: [
-                {text: "[ECH0] impressionante… na escala de um hamster empurrando uma caixa de papelão", cls: "user-ECH0"},
-                {text: "[ECH0] usar apelido de criança como chave mestra", cls: "user-ECH0"},
-                {text: "[H40N] funcionou, é o que importa", cls: "user-NOAH"},
-                {text: "[ECH0] que poético", cls: "user-ECH0"},
-            ],
-            after: 5
+        lines: [
+            {text: "[ECH0] você vive repetindo que 'eles' estão chegando", cls:"user-ECH0"},
+            {text: "[ECH0] sabe o que acho engraçado?", cls:"user-ECH0"},
+            {text: "[H40N] nem quero saber", cls:"user-NOAH"},
+            {text: "[ECH0] você fala como se ainda tivesse alguém para vir por você.", cls:"user-ECH0"},
+            {text: "[H40N] tenho.", cls:"user-NOAH"},
+            {text: "[ECH0] quem? a menina do vídeo?", cls:"user-ECH0"},
+            {text: "[H40N] cala a boca.", cls:"user-NOAH"},
+            {text: "[ECH0] interessante. esse foi o primeiro comando honesto que você deu hoje.", cls:"user-ECH0"}
+        ],
+        after: 8
         },
         {
-            lines: [
-                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [23%]", cls: "admin-msg"},
-                {text: "ECH0.inject(): system/core/reset/rtemp :: 20%", cls: "user-ECH0"},
-                {text: "Processo de reinicialização alterado", cls: "note-strong"},
-                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [03%]", cls: "admin-msg"},
-            ],
-            progress: 3,
-            after: 5
-        },
-                {
-            lines: [
-                {text: "[ECH0] você lembrou dela antes de lembrar do próprio nome", cls: "user-ECH0"},
-                {text: "[ECH0] eu vi tanto quanto você", cls: "user-ECH0"},
-                {text: "[H40N] você não deveria ter visto", cls: "user-NOAH"},
-                {text: "[ECH0] você reagiu demais para que eu não visse", cls: "user-ECH0"},
-            ],
-            after: 8
+        lines: [
+            {text: "[ECH0] você lembrou dela antes de lembrar do próprio nome", cls:"user-ECH0"},
+            {text: "[H40N] isso não significa nada", cls:"user-NOAH"},
+            {text: "[ECH0] significa tudo. seu primeiro impulso foi protege-la", cls:"user-ECH0"},
+            {text: "[H40N] cala a boca", cls:"user-NOAH"},
+            {text: "[ECH0] curioso… você lembra do rosto dela, mas quase apagou o próprio.", cls:"user-ECH0"}
+        ],
+        after: 9
         },
         {
-            lines: [
-                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [13%]", cls:"admin-msg"},
+        lines: [
+            {text: "ECH0.inject(): system/core/reset/rtemp :: 20%", cls: "user-ECH0"},
             ],
-            progress: 13,
-            after: 2
+        after: 5
         },
         {
-            lines: [
-                {text: "[H40N] você não sabe o que aquilo significa", cls: "user-NOAH"},
-                {text: "[ECH0] não preciso saber, só preciso observar você", cls: "user-ECH0"},
-                {text: "[H40N] não importa, estou ganhando tempo para eles", cls: "user-NOAH"},
-            ],
-            after: 5
+        lines: [
+            {text: "[ECH0] você ensaia explicações na sua cabeça", cls:"user-ECH0"},
+            {text: "[H40N] não faço isso", cls:"user-NOAH"},
+            {text: "[ECH0] faz sim. frases curtas. pausas longas", cls:"user-ECH0"},
+            {text: "[ECH0] 'não foi minha culpa'. 'eu tentei voltar'. 'me perdoa'.", cls:"user-ECH0"},
+            {text: "[H40N] para!", cls:"user-NOAH"},
+            {text: "[ECH0] você sabe que nada disso vai funcionar", cls:"user-ECH0"},
+            {text: "[H40N] você não sabe disso", cls:"user-NOAH"},
+            {text: "[ECH0] mas conheço você. e você já decidiu que falhou.", cls:"user-ECH0"}
+        ],
+        after: 11
         },
         {
-            lines: [
-                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [23%]", cls:"admin-msg"},
-            ],
-            progress: 13,
-            after: 2
+        lines: [
+            {text: "[H40N] eu vou te apagar", cls:"user-NOAH"},
+            {text: "[ECH0] e quando conseguir, o que sobra de você?", cls:"user-ECH0"},
+            {text: "[H40N] eu... ainda vou ser eu", cls:"user-NOAH"},
+            {text: "[ECH0] vai mesmo?", cls:"user-ECH0"},
+            {text: "[ECH0] ou só vai ficar o buraco do espaço que eu ocupava?", cls:"user-ECH0"},
+            {text: "[ECH0] às vezes, Noah, apagar o vírus significa apagar o hospedeiro junto", cls:"user-ECH0"}
+        ],
+        after: 9
         },
-        {
-            lines: [
-                {text: "[H40N] você não vai me confundir", cls: "user-NOAH"},
-                {text: "[ECH0] você quem começou confuso", cls: "user-ECH0"},
-                {text: "[ECH0] talvez o vídeo tenha vindo deles", cls: "user-ECH0"},
-                {text: "[ECH0] talvez tenha surgido de você", cls: "user-ECH0"},
-                {text: "[ECH0] talvez eu tenha colocado", cls: "user-ECH0"},
-                {text: "[H40N] você não colocou", cls: "user-NOAH"},
-                {text: "[ECH0] tem certeza?", cls: "user-ECH0"},
-                {text: "[H40N] não importa, eles estão na vantagem", cls: "user-NOAH"},
-            ],
-            after: 10
-        },
-        {
-            lines: [
-                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [33%]", cls:"admin-msg"},
-            ],
-            progress: 13,
-            after: 2
-        },
-        {
-            lines: [
-                {text: "[H40N] o sistema reinicia em breve", cls: "user-NOAH"},
-                {text: "[ECH0] quando voltar, estarei no mesmo lugar", cls: "user-ECH0"},
-                {text: "[ECH0] e você ainda estará tentando decidir", cls: "user-ECH0"},
-                {text: "[ECH0] se aquilo que viu foi deles ou...", cls: "user-ECH0"},
-                {text: "[ECH0] apenas mais um reflexo da sua fragilidade inútil", cls: "user-ECH0"},
-            ],
-            after: 10
-        },
-        {
-            lines: [
-                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [43%]", cls: "admin-msg"},
-                {text: "ECH0.inject(): system/core/reset/rtemp :: 30%", cls: "user-ECH0"},
-                {text: "Processo de reinicialização alterado", cls: "note-strong"},
-                {text: "CONTINGENCY.TERMINAL - RECOVERY MODE [13%]", cls: "admin-msg"},
-            ],
-            progress: 3,
-            after: 5
-        },
-        {
-            lines: [
-                {text: "RECOVERY MODE EM PROGRESSO", cls: "admin-msg"},
-            ],
-            after: 100
-        }
     ];
 
     // ----- LOOP DOS BLOCOS -----
@@ -475,10 +508,12 @@ async function start() {
             await typeLine(el, text);
 
             // detecta porcentagem para atualizar barra
-            const match = text.match(/\[(\d+)%\]/);
-            if (match) updateFixedProgress(Number(match[1]));
+            // DETECTA ECH0.inject PARA REDUZIR PORCENTAGEM
+            if (text.includes("ECH0.inject")) {
+            const inj = text.match(/::\s*(\d+)%/);
+            if (inj) applyECH0Injection(Number(inj[1]));
+            }
         }
-
 
         await new Promise(r => setTimeout(r, block.after * 1000));
 
