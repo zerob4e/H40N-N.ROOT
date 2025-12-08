@@ -530,24 +530,49 @@ function handleCommand(raw) {
         }
 
     if (lower === "usb upload" || lower === "usb upload") {
-        if (!loggedIn) return print("error", "Acesso negado. Faça login.");
+    if (!loggedIn) return print("error", "Acesso negado. Faça login.");
 
-        print("success", "Dispositivo detectado");
-        print("progress", "Inicializando leitura de diretório...");
-        print("success", "Leitura concluída");
+    print("success", "Dispositivo detectado");
+    print("progress", "Inicializando leitura de diretório...");
+    print("success", "Leitura concluída");
+
+    setTimeout(() => {
+        print("progress", "Copiando arquivos...");
 
         setTimeout(() => {
-            print("progress", "Copiando arquivos...");
+            print("success", "Upload concluído.");
+            print("note", "isso m- ajuda a lembrar");
+
+            /* -------------------------
+               INÍCIO DO MODO REBOOT
+            --------------------------*/
+            setTimeout(() => {
+                print("progress", "Reinicializando módulos...");
+            }, 800);
 
             setTimeout(() => {
-                print("success", "Upload concluído.");
-                print("note", "isso m- ajuda a lembrar");
-            }, 1900);
+                print("progress", "Encerrando sessão...");
+            }, 1600);
 
-        }, 1200);
+            setTimeout(() => {
+                print("progress", "Reinicialização forçada iniciada...");
+            }, 2600);
 
-        return;
-    }
+            // redireciona para o novo HTML
+            setTimeout(() => {
+                window.location.href = "docs/reboot.html";
+            }, 4200);
+            /* -------------------------
+               FIM DO REBOOT
+            --------------------------*/
+
+        }, 1900);
+
+    }, 1200);
+
+    return;
+}
+
 
     // comando não reconhecido
     print("error", `Comando não reconhecido ou incorreto: '${cmd}'`);
