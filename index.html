@@ -1,646 +1,454 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>H40N - N.ROOT | TERMINAL V3.3</title>
-
 <style>
-    body {
-        background: #0a0a0a;
-        margin: 0;
-        padding: 0;
-        font-family: monospace;
-        color: #e5e5e5;
+    :root{
+        --bg:#0a0a0a;
+        --panel:#111;
+        --panel-2:#1a1a1a;
+        --text:#e5e5e5;
+        --muted:#9aa4ac;
+        --accent:#4ecbff;
+        --prompt:#00e676;
+        --user:#6ac8ff;
+        --admin:#e5e5e5;
+    }
+    html,body{
+        height:100%;
+        margin:0;
+        background:var(--bg);
+        font-family:monospace;
+        color:var(--text);
+    }
+    .terminal-wrapper{
+        width:92%;
+        max-width:980px;
+        margin:28px auto;
+        border-radius:10px;
+        overflow:hidden;
+        border:1px solid #222;
+        box-shadow:0 10px 50px rgba(0,0,0,0.7);
+        background:linear-gradient(180deg,var(--panel),#0f0f0f);
+    }
+    .terminal-header{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:12px;
+        background:var(--panel-2);
+        border-bottom:1px solid #222
+    }
+    .dot{
+        width:12px;
+        height:12px;
+        border-radius:50%
+    }
+    .red{background:#ff5f56}
+    .yellow{background:#ffbd2e}
+    .green{background:#27c93f}
+    
+    .terminal-title{
+        flex:1;
+        text-align:center;
+        opacity:.85;
+        font-size:0.95rem
+    }
+    #output{
+        height:68vh;
+        padding:20px;
+        overflow-y:auto;
+        white-space:pre-wrap;
+        line-height:1.35;
+        font-size:0.98rem
+    }
+    .terminal-input-area{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:12px;
+        background:var(--panel-2);
+        border-top:1px solid #222
+    }
+    #prompt{color:var(--prompt);font-weight:700}
+    /* fake input box (disabled) */
+    .input-disabled{
+        flex:1;
+        padding:10px 12px;
+        border-radius:6px;
+        border:1px dashed #2b2b2b;
+        background:transparent;
+        color:var(--muted);
+        font-family:monospace;
+        font-size:0.95rem;
+    }
+    .note-strong{color:#ff9aa2;font-weight:700}
+    .line{margin:6px 0}
+    .meta{color:var(--muted)}
+    .user-NOAH{color:#3ee9e9}
+    .user-ECH0{color:#ffa200}
+    .admin-msg{color:var(--admin)}
+    .process{color:#ffdb25}
+    .sucess{color:#00e676}
+
+    /* typing caret for lines being typed */
+    .typing-caret::after{
+        content: "|";
+        display:inline-block;
+        margin-left:6px;
+        animation: blink 1s steps(2,start) infinite;
+        color:var(--text);
+    }
+    @keyframes blink{50%{opacity:0}}
+    /* small emphasis */
+    .em{color:var(--accent)}
+    /* scrollbar cosmetic */
+    #output::-webkit-scrollbar{width:10px}
+    #output::-webkit-scrollbar-thumb{background:#111;border-radius:6px}
+
+    .gap {
+    height: 22px;     /* tamanho visual do salto */
+    display: block;
     }
 
-    .terminal-wrapper {
-        width: 90%;
-        max-width: 900px;
-        margin: 40px auto;
-        border: 1px solid #333;
-        border-radius: 8px;
-        overflow: hidden;
-        background: #111;
-        box-shadow: 0px 0px 20px rgba(0,0,0,0.6);
+    .progress-bar-container {
+    width: 100%;
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 6px;
+    margin-top: 8px;
+    padding: 6px;
+    }
+
+    .progress-label {
+    margin-top: 4px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    }
+
+    /* animação de "processando" na barra fixa */
+    .progress-bar {
+        height: 14px;
+        width: 0%;
+        background: var(--accent);
+        border-radius: 4px;
+        transition: width 1.6s ease;
         position: relative;
+        overflow: hidden;
     }
 
-    .terminal-header {
-        background: #1a1a1a;
-        padding: 10px;
-        border-bottom: 1px solid #333;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+    /* efeito de brilho se movendo dentro da barra */
+    .progress-bar::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -40%;
+        width: 40%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,0.35),
+            transparent
+        );
+        animation: barShine 1.4s infinite linear;
+        mix-blend-mode: screen;
     }
 
-    .header-buttons {
-        background: #1a1a1a;
-        padding: 10px;
-        border-bottom: 1px solid #333;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+    @keyframes barShine {
+        0% { left: -40%; }
+        100% { left: 140%; }
     }
 
-    .dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
+    .fade-out {
+    opacity: 0;
+    transition: opacity 0.45s ease;
     }
 
-    .dot.red { background: #ff5f56; }
-    .dot.yellow { background: #ffbd2e; }
-    .dot.green { background: #27c93f; }
-
-    .terminal-title {
-        flex: 1;
-        text-align: center;
-        opacity: 0.7;
-    }
-
-    #output {
-        height: 80vh;
-        overflow-y: auto;
-        padding: 15px;
-        line-height: 1.45em;
-        white-space: pre-wrap;
-    }
-
-    .terminal-input-area {
-        display: flex;
-        gap: 10px;
-        padding: 12px;
-        background: #1a1a1a;
-        border-top: 1px solid #333;
-    }
-
-    #input {
-        width: 100%;
-        background: transparent;
-        border: none;
-        outline: none;
-        color: #e5e5e5;
-        font-size: 1em;
-    }
-
-    .cmd { color: #e5e5e5; }
-    .out { color: #cccccc; }
-    .error { color: #ff4d4d; }
-    .success { color: #00e676; }
-    .progress { color: #ffe100; transition: opacity 0.6s; }
-    .note { color: #bdbdbd; opacity: 1; transition: opacity 0.6s; }
 </style>
 </head>
-
 <body>
-
-<div class="terminal-wrapper">
-
+<div class="terminal-wrapper" role="region" aria-label="Contingency Terminal">
     <div class="terminal-header">
         <div class="dot red"></div>
         <div class="dot yellow"></div>
         <div class="dot green"></div>
-        <div class="terminal-title">H40N - N.ROOT | TERMINAL V3.3</div>
+        <div class="terminal-title">H40N - N.ROOT | CONTINGENCY</div>
     </div>
 
     <div id="output" aria-live="polite"></div>
 
-    <div id="viewerOverlay" 
-        style="
-            display:none;
-            position:absolute;
-            top:0;
-            left:0;
-            width:100%;
-            height:100%;
-            z-index: 999;
-            background: rgba(0,0,0,0.75);
-            backdrop-filter: blur(3px);
-        ">
-        <div style="
-            width:90%;
-            height:85%;
-            margin:40px auto 0 auto;
-            background:#0a0a0a;
-            border:1px solid #333;
-            border-radius:12px;
-            overflow:hidden;
-            display:flex;
-            flex-direction:column;
-            box-shadow:0 0 20px rgba(0,0,0,0.7);
-        ">
-            <div class="header-buttons">
-                <div class="dot red" onclick="closeViewer()"></div>
-                <div class="dot yellow"></div>
-                <div class="dot green"></div>
-            </div>
-
-            <iframe id="viewerFrame"
-                    style="width:100%; height:100%; border:none; background:#0a0a0a;">
-            </iframe>
+    <div class="terminal-input-area" aria-hidden="true">
+        <div id="prompt">&gt;</div>
+        <!-- área onde usuário podia digitar: permissão removida -->
+        <div class="input-disabled" title="Escrita desativada">
+            &nbsp;Aguarde o sistema restaurar. Não é possível inserir comandos agora.
         </div>
-    </div>
-
-    <div class="terminal-input-area">
-        <span style="color:#00e676; font-weight:bold;">&gt;</span>
-        <input id="input" type="text" autocomplete="off" placeholder="Digite um comando..." autofocus />
     </div>
 </div>
 
 <script>
-/* -------------------------
-   Variáveis principais
--------------------------*/
+const output = document.getElementById('output');
 
-let commandHistory = [];
-let historyIndex = -1;
+let progressBarFixed = null;
+let hasShownFirstBar = false;
 
-const database = {
-    users: [
-        { id: 2, name: "ECH0", email: "ech0@h40n.sys", role: "user", password: "33#33", locked: true },
-        { id: 3, name: "H40N", email: "h40n@h40n.sys", role: "user", password: "PR4G4#33" }
-    ]
-};
+// ----- FUNÇÃO: cria barra fixa ou atualiza -----
+// -----------------------------
+// SISTEMA DE PROGRESSO AUTOMÁTICO
+// -----------------------------
+let progressValue = 0;  // valor inicial da barra
+let autoProgressInterval = null;
 
-let loggedIn = false;
-let currentUser = null;
-const protectedCommands = ["status", "files"];
-const output = document.getElementById("output");
-const input = document.getElementById("input");
+// cria/atualiza a barra fixa
+function updateFixedProgress(val) {
+    progressValue = Math.max(0, Math.min(val, 99)); // nunca chega a 100
 
-/* FILA PARA MENSAGENS */
-let queue = [];
-let processing = false;
-let delayAfterProgress = false;
+    if (!progressBarFixed) {
+        progressBarFixed = document.createElement("div");
+        progressBarFixed.className = "progress-bar-container";
 
-/* guarda a última linha progress (se existir) */
-let lastProgressLine = null;
+        const bar = document.createElement("div");
+        bar.className = "progress-bar";
+        bar.style.width = progressValue + "%";
 
-/* função segura para logar erros JS no terminal */
-function safeLogError(err) {
-    try {
-        const msg = (err && err.message) ? err.message : String(err);
-        queueMessage("error", `[JS ERROR] ${msg}`, 5);
-        console.error(err);
-    } catch (e) {
-        console.error("Erro ao logar erro:", e);
+        const label = document.createElement("div");
+        label.className = "progress-label";
+        label.textContent = `Restaurando sistema... ${progressValue}%`;
+
+        progressBarFixed.appendChild(bar);
+        progressBarFixed.appendChild(label);
+        output.appendChild(progressBarFixed);
+    } else {
+        const bar = progressBarFixed.querySelector(".progress-bar");
+        const label = progressBarFixed.querySelector(".progress-label");
+
+        bar.style.width = progressValue + "%";
+        label.textContent = `Restaurando sistema... ${progressValue}%`;
     }
 }
 
-/* Enfileira mensagens */
-function queueMessage(type, text, speed = 20) {
-    try {
-        // proteção contra valores inválidos
-        if (typeof text !== "string") text = String(text);
-        queue.push({ type, text, speed });
-        processQueue();
-    } catch (err) {
-        safeLogError(err);
+// inicia subida automática de 1% a cada 10s
+function startAutoProgress() {
+    if (autoProgressInterval) return; 
+
+    autoProgressInterval = setInterval(() => {
+        if (progressValue < 99) {
+    updateFixedProgress(progressValue + 1);
+    } else {
+    triggerECH0Reset(); // chama a quebra do ECH0
+    }
+
+    }, 2000);
+}
+
+// reduz porcentagem quando ECH0.inject aparece
+function applyECH0Injection(amount) {
+    updateFixedProgress(progressValue - amount);
+}
+
+// chama depois de criar a barra inicial
+startAutoProgress();
+
+
+// ----- FUNÇÃO: remove linhas ENTRE o índice 8 até antes da barra -----
+// (mantive essa função, não usada se você prefere backspace; deixei por segurança)
+function removeInitialLines() {
+    const children = Array.from(output.children);
+
+    // Mantém tudo até a barra fixa
+    const preserveUntil = children.indexOf(progressBarFixed);
+
+    for (let i = preserveUntil - 1; i >= 2; i--) {
+        output.removeChild(children[i]);
     }
 }
 
-/* Processa fila com proteção */
-function processQueue() {
-    if (processing || queue.length === 0) return;
-    const job = queue.shift();
-    if (!job) return;
-    processing = true;
+// ----- FUNÇÃO: apaga bloco com animação de backspace -----
+async function eraseBlock(lines) {
+    for (let i = lines.length - 1; i >= 0; i--) {
+        const el = lines[i];
 
-    const { type, text, speed } = job;
-    let delay = 0;
-    try {
-        if (delayAfterProgress && type !== "progress") {
-            delay = 3000;
-            delayAfterProgress = false;
+        // aplica fade-out
+        el.classList.add("fade-out");
+
+        // espera a transição terminar
+        await new Promise(resolve => setTimeout(resolve, 460));
+
+        if (el.parentElement) {
+            el.parentElement.removeChild(el);
         }
-        if (type === "progress") delayAfterProgress = true;
-
-        setTimeout(() => {
-            try {
-                typeWrite(type, text, speed, () => {
-                    processing = false;
-                    // next tick para evitar callstack profundo
-                    setTimeout(processQueue, 0);
-                });
-            } catch (err) {
-                processing = false;
-                safeLogError(err);
-                setTimeout(processQueue, 0);
-            }
-        }, delay);
-    } catch (err) {
-        processing = false;
-        safeLogError(err);
     }
 }
 
-/* wrapper para enfileirar (API pública) */
-function print(type, text, speed = 20) {
-    queueMessage(type, text, speed);
+// ============================
+//   FUNÇÃO: RESET DO ECH0
+// ============================
+async function triggerECH0Reset() {
+
+    // impede progressão automática enquanto ECH0 fala
+    clearInterval(autoProgressInterval);
+    autoProgressInterval = null;
+
+    // limpa qualquer bloco que ainda esteja na tela (mantém só a barra)
+    while (output.lastChild && output.lastChild !== progressBarFixed) {
+        output.removeChild(output.lastChild);
+    }
+
+    // diálogo do ECH0 quando chega a 99%
+    const lines = [
+        { text: "[ECH0] bem-vindo ao meu looping eterno", cls: "user-ECH0" },
+        { text: "ECH0.inject(): system/core/reset/rtemp :: 99%", cls: "user-ECH0" }
+    ];
+
+    let els = [];
+
+    for (let item of lines) {
+        const el = appendLine(item.cls);
+        els.push(el);
+        await typeLine(el, item.text);
+    }
+
+    await new Promise(r => setTimeout(r, 1400));
+
+    // apaga as falas
+    await eraseBlock(els);
+
+    // zera a barra e recomeça o ciclo
+    updateFixedProgress(0);
+
+    // retoma a subida automática
+    startAutoProgress();
 }
 
-/* Digitação letra-a-letra com proteções */
-function typeWrite(type, text, speed = 20, callback) {
-    try {
+
+// ----- FUNÇÃO: cria uma linha -----
+function appendLine(cls = "") {
+    const el = document.createElement('div');
+    el.className = 'line ' + cls;
+    output.appendChild(el);
+    output.scrollTop = output.scrollHeight;
+    return el;
+}
+
+// ----- FUNÇÃO: escreve linha com efeito -----
+function typeLine(el, text) {
+    return new Promise(resolve => {
+        if (typeof text !== "string") text = String(text || "");
         let i = 0;
-        const line = document.createElement("div");
-        line.className = type || "out";
-        line.setAttribute("role", "log");
+        function step() {
+            el.textContent += text[i] || "";
+            i++;
 
-        // Se existe uma progress visível, substituir a posição dela pela nova linha
-        if (lastProgressLine && lastProgressLine.parentNode === output) {
-            try {
-                // inserir a nova linha no lugar da progress (replaceChild)
-                // mantemos a referência antiga para remover/transicionar se quiser
-                output.replaceChild(line, lastProgressLine);
-                // limpamos a referência imediatamente — a progress foi substituída
-                lastProgressLine = null;
-            } catch (e) {
-                // fallback: se replace falhar, usar append
-                output.appendChild(line);
-            }
-        } else {
-            output.appendChild(line);
+            if (i < text.length) setTimeout(step, 12 + Math.random() * 30);
+            else resolve();
+        }
+        if (text.length === 0) resolve();
+        else step();
+    });
+}
+
+// =======================
+//   INÍCIO DA ANIMAÇÃO
+// =======================
+
+async function start() {
+
+    // ---------- FIXOS ----------
+    const fixed = [
+    { text: "RECOVERY MODE", cls: "meta" },
+    { text: "", cls: "" },
+
+    // estes serão apagados assim que a barra aparecer
+    { text: "Calculando reinicialização do sistema", cls: "process" }
+    ];
+
+
+    let fixedEls = [];
+
+    for (let item of fixed) {
+        let text = typeof item === "string" ? item : item.text;
+        let cls  = typeof item === "string" ? ""    : item.cls;
+
+        const el = appendLine(cls);
+        fixedEls.push(el);
+
+        await typeLine(el, text);
+    }
+
+
+    // BAR FIXA INICIAL
+    updateFixedProgress(3);
+    hasShownFirstBar = true;
+
+    // delay antes de apagar (você pode ajustar o tempo aqui)
+    await new Promise(r => setTimeout(r, 1500));
+
+    // identificar as linhas que serão apagadas (usando animação de backspace)
+    const linesToErase = fixedEls.slice(2); 
+    // índice 0 = data, 1 = linha vazia → ficam
+    // índice 2+ = reset, iniciando, recovery 03% → apagam
+
+    // apagar com animação de backspace
+    await eraseBlock(linesToErase);
+
+    // ======================
+    //   BLOCOS DINÂMICOS
+    // ======================
+
+    const blocks = [
+        {
+        lines: [
+            {text: "[H40N] confiem em mim...", cls:"user-NOAH"},
+            {text: "[H40N] eu to reiniciando o sistema", cls:"user-NOAH"},
+            {text: "[H40N] to ganhando tempo para vocês", cls:"user-NOAH"},
+            {text: "[H40N] enquanto o terminal estiver reiniciando, estamos na... vantagem?", cls:"user-NOAH"},
+            {text: "[H40N] confiem em mim... só mais um pouco", cls:"user-NOAH"},
+            {text: "[ECH0] ai quanto sentimentalismo, você me enjoa", cls:"user-ECH0"},
+        ],
+        after: 12
+        },
+    ];
+
+    // ----- LOOP DOS BLOCOS -----
+    for (const block of blocks) {
+
+        // limpar área abaixo da barra antes de escrever o bloco
+        while (output.lastChild && output.lastChild !== progressBarFixed) {
+            output.removeChild(output.lastChild);
         }
 
-        // small fade-in para suavizar a substituição
-        line.style.opacity = "0";
-        line.style.transition = "opacity 0.18s ease";
-        // garantir scroll para o final (caso append usado)
-        output.scrollTop = output.scrollHeight;
+        // escrever bloco
+        let created = [];
+        for (let item of block.lines) {
 
-        // delay mínimo antes de mostrar para permitir o layout estabilizar
-        setTimeout(() => {
-            try { line.style.opacity = "1"; } catch(e){ /* ignore */ }
-        }, 20);
+            // permite usar string ou {text, cls}
+            let text = typeof item === "string" ? item : item.text;
+            let cls  = typeof item === "string" ? ""    : item.cls;
 
-        function writeChar() {
-            try {
-                if (i <= text.length) {
-                    line.textContent = text.slice(0, i);
-                    output.scrollTop = output.scrollHeight;
-                    i++;
-                    const wait = Math.max(1, speed);
-                    setTimeout(writeChar, wait);
-                } else {
-                    line.textContent = text;
+            const el = appendLine(cls);
+            created.push(el);
 
-                    /* --- marca a linha progress como a última progress visível --- */
-                    if (type === "progress") {
-                        lastProgressLine = line; // marca para ser substituída pela próxima mensagem
-                        // garantir que a progress esteja totalmente visível
-                        line.style.opacity = "1";
-                    }
+            await typeLine(el, text);
 
-                    /* regra das notes (fade e remoção) */
-                    if (type === "note") {
-                        setTimeout(() => {
-                            line.style.opacity = "0";
-                            setTimeout(() => {
-                                if (line && line.parentNode) line.parentNode.removeChild(line);
-                            }, 600);
-                        }, 1000);
-                    }
-
-                    if (callback) callback();
-                }
-            } catch (err) {
-                safeLogError(err);
-                if (callback) callback();
+            // detecta porcentagem para atualizar barra
+            // DETECTA ECH0.inject PARA REDUZIR PORCENTAGEM
+            if (text.includes("ECH0.inject")) {
+            const inj = text.match(/::\s*(\d+)%/);
+            if (inj) applyECH0Injection(Number(inj[1]));
             }
         }
-        writeChar();
 
-    } catch (err) {
-        safeLogError(err);
-        if (callback) callback();
+        await new Promise(r => setTimeout(r, block.after * 1000));
+
+        // apagar bloco com animação
+        await eraseBlock(created);
     }
 }
 
-/* VIEWER */
-function openFileInViewer(path) {
-    try {
-        const frame = document.getElementById("viewerFrame");
-        const overlay = document.getElementById("viewerOverlay");
-        frame.src = path;
-        overlay.style.display = "block";
-
-        // ARQUIVOS QUE DEVEM GERAR A MENSAGEM ESPECIAL
-        if (path.includes("error403") || path.includes("node-n_error")) {
-            print("error", "[FAILURE] MODULO RESTRITO::CORROMPIDO == ZONA DE MEMÓRIA");
-        } else {
-            print("success", "Abertura bem-sucedida. Arquivo carregado no visualizador");
-        }
-        
-    } catch (err) {
-        safeLogError(err);
-    }
-}
-
-
-function closeViewer() {
-    try {
-        const overlay = document.getElementById("viewerOverlay");
-        const frame = document.getElementById("viewerFrame");
-        overlay.style.display = "none";
-        frame.src = "";
-    } catch (err) {
-        safeLogError(err);
-    }
-}
-
-/* FILESYSTEM */
-const fileSystem = {
-    "arquivos.amanecer": {
-        "relatorio-amanecer": "docs/amanecer_arq-relatorio.html",
-        "experimento-amanecer": "docs/amanecer_arq-experimento.html"
-    },
-    "arquivos.kitsune": {
-        "relatorio-yokai":"docs/kitsune_arq-relatorio.html",
-        "anexos-yokai":"docs/kitsune_arq-anexos.html"
-    },
-    "arquivos.tpd-3": {
-        "tpd-relatorio":"docs/node-n_error.html",
-        "tpd-anexos":"docs/node-n_error.html",
-        "arq-operador":"docs/node-n_root.html"
-    },
-    "anomaly": {
-        "anomaly-index": "docs/error403.html",
-        "noah_anchor": "docs/error403.html",
-        "temporal_map": "docs/error403.html"
-    },
-    "moon": {
-        "quantum_sys": "docs/error403.html",
-        "node-n.root": "docs/node-n_root.html"
-    },
-
-    "usb.drive": {
-    "log-usb": "docs/error403.html",
-    "dump-bin": "docs/error403.html",
-    "captura.raw": "docs/error403.html"
-    },
-};
-
-/* COMANDOS */
-function handleCommand(raw) {
-    try {
-        const cmd = (raw || "").trim();
-        const lower = cmd.toLowerCase();
-        if (!cmd) return;
-
-        commandHistory.push(cmd);
-        historyIndex = commandHistory.length;
-
-        print("cmd", "/" + cmd);
-
-        if (lower.startsWith("open ")) {
-            const parts = cmd.split(" ").filter(Boolean);
-            if (parts.length === 2) return handleOpen(parts[1].toLowerCase());
-            if (parts.length === 3) {
-                const folder = parts[1].toLowerCase();
-                const file = parts[2].toLowerCase();
-                if (!fileSystem[folder]) return print("error", `Pasta '${folder}' não encontrada.`);
-                if (!fileSystem[folder][file]) return print("error", `Arquivo '${file}' não encontrado.`);
-                return openFileInViewer(fileSystem[folder][file]);
-            }
-            return print("error", "Uso correto: open <pasta> ou open <pasta> <arquivo>");
-        }
-
-        if (protectedCommands.includes(lower) && !loggedIn)
-            return print("error", "Acesso negado. Faça login.");
-
-        if (lower === "help") {
-            print("out", "=====================================================");
-            print("out", "help                    - Lista comandos");
-            print("out", "users                   - Lista usuários");
-            print("out", "login user senha        - Autenticação");
-            print("out", "files                   - Lista arquivos (requer login)");
-            print("out", "open [pasta]            - Abre diretório (requer login)");
-            print("out", "open [pasta] [arquivo]  - Abre diretório (requer login)");
-            print("out", "logout                  - Encerrar sessão");
-            print("note", "status operador");
-            print("note", "status tpd-3");
-            print("out", "=====================================================");
-            return;
-        }
-
-        if (lower === "clear") {
-            output.innerHTML = "";
-            return;
-        }
-
-        if (lower === "users") {
-            print("out", "=====================================================");
-            database.users.forEach(u => {
-                print("out", `[${u.role.toUpperCase()}] ${u.name} - ${u.email}`);
-            });
-            print("out", "=====================================================");
-            return;
-        }
-
-        if (lower === "about") {
-            print("out", "======================================");
-            print("out", "Sistema criado por H40N em ##.09.20##");
-            print("out", "======================================");
-            return;
-        }
-
-        if (lower.startsWith("login ")) {
-            const [_, user, ...passArray] = cmd.split(" ");
-            const pass = passArray.join(" ");
-            const found = database.users.find(
-                u => u.name.toLowerCase() === (user || "").toLowerCase()
-            );
-
-            if (!found || found.password !== pass) {
-                return print("error", "[FAILURE] LOGIN INVÁLIDO :: CREDENCIAIS INCORRETAS");
-            }
-
-            if (found.locked) {
-                return print("error", "[BLOCK] Usuario bloqueado por violação de segurança.");
-            }
-
-            loggedIn = true;
-            currentUser = found.name;
-            print("success", `Login bem-sucedido. Bem-vindo, ${found.name}`);
-            print("note", "prag- a quanto temp- não escuto isso?");
-            return;
-        }
-
-        if (lower === "logout") {
-            if (!loggedIn) return print("error", "Nenhum usuário logado.");
-            loggedIn = false;
-            currentUser = null;
-            output.innerHTML = "";
-            print("success", "Sessão encerrada.");
-            print("out", "Digite 'help' para ver os comandos.");
-            return;
-        }
-
-        if (lower === "status") {
-            print("error", "[ERR_HANDLER] Assinatura corrompida");
-            print("error", "[ERR_HANDLER] Operador ativo");
-            return;
-        }
-
-        if (lower === "files") {
-            if (currentUser === "ECH0") {
-                print("out", "📁 anomaly");
-                print("out", "📁 moon");
-                return;
-            }
-            if (currentUser === "H40N") {
-                print("out", "📁 arquivos.amanecer");
-                print("out", "📁 arquivos.kitsune");
-                print("out", "📁 arquivos.tpd-3");
-                return;
-            }
-            return;
-        }
-
-        if (lower === "status tpd-3") {
-            if (!loggedIn) return print("error", "Acesso negado. Faça login para continuar.");
-            if (currentUser !== "H40N") return print("error", "Permissão insuficiente");
-
-            print("progress", "Localizando protocolo TPD-3...");
-            print("progress", "Validando integridade do módulo...");
-            print("progress", "Verificando assinatura de operador...");
-            print("error", "[ERR_HANDLER::TPD3] Assinatura corrompida");
-            print("error", "[ERR_HANDLER::TPD3] Operador ativo");
-            print("out", "");
-            print("note", "eu m- lembro melhor agor-");
-            return;
-        }
-
-        if (lower === "status operador") {
-            if (!loggedIn) return print("error", "Acesso negado. Faça login para continuar.");
-            if (currentUser !== "H40N") return print("error", "Permissão insuficiente");
-
-            print("progress", "Calculando integridade do operador...");
-            print("out", "Frequência cardíaca :: INDETERMINADA");
-            print("out", "Atividade neural :: ATIVO");
-            print("out", "Integridade fisiológica :: CRESCENTE [70%]");
-            print("out", "Coerência de memória :: ESTAVÉL [60%]");
-            print("out", "Presença física :: DETECTADA EM MULTIPLOS FR####");
-            print("error", "Status geral :: VIVO | EM CALIBRAÇÃO | PRESO NA ZONA T-NULL");
-            print("note", "el- nunca vai me perdoar. sinto mt");
-            return;
-        }
-
-    if (lower === "usb upload" || lower === "usb upload") {
-    if (!loggedIn) return print("error", "Acesso negado. Faça login.");
-
-    print("success", "Dispositivo detectado");
-    print("progress", "Inicializando leitura de diretório...");
-    print("success", "Leitura concluída");
-
-    setTimeout(() => {
-        print("progress", "Copiando arquivos...");
-
-        setTimeout(() => {
-            print("success", "Upload concluído.");
-            print("note", "isso m- ajuda a lembrar");
-
-            /* -------------------------
-               INÍCIO DO MODO REBOOT
-            --------------------------*/
-            setTimeout(() => {
-                print("progress", "Reinicializando módulos...");
-            }, 800);
-
-            setTimeout(() => {
-                print("progress", "Encerrando sessão...");
-            }, 1600);
-
-            setTimeout(() => {
-                print("progress", "Reinicialização forçada iniciada...");
-            }, 2600);
-
-            // redireciona para o novo HTML
-            setTimeout(() => {
-                window.location.href = "docs/reboot.html";
-            }, 4200);
-            /* -------------------------
-               FIM DO REBOOT
-            --------------------------*/
-
-        }, 1900);
-
-    }, 1200);
-
-    return;
-}
-
-
-    // comando não reconhecido
-    print("error", `Comando não reconhecido ou incorreto: '${cmd}'`);
-    } catch (err) {
-        safeLogError(err);
-    }
-} // <-- FECHAMENTO CORRETO DA handleCommand
-
-
-function handleOpen(folder) {
-    try {
-        if (!loggedIn) return print("error", "Faça login.");
-        if (!fileSystem[folder]) return print("error", `Pasta '${folder}' não encontrada.`);
-        print("progress", `Abrindo /${folder} ...`);
-        Object.keys(fileSystem[folder]).forEach(f => print("out", " " + f));
-    } catch (err) {
-        safeLogError(err);
-    }
-}
-
-/* INPUT: escuta tecla */
-input.addEventListener("keydown", e => {
-    try {
-        if (e.key === "Enter") {
-            e.preventDefault(); // proteção extra
-            const value = input.value;
-            input.value = "";
-            // roda o comando dentro de try/catch (dentro do handleCommand também há try)
-            handleCommand(value);
-            return;
-        }
-        if (e.key === "ArrowUp") {
-            if (historyIndex > 0) {
-                historyIndex--;
-                input.value = commandHistory[historyIndex] || "";
-            }
-            e.preventDefault();
-            return;
-        }
-        if (e.key === "ArrowDown") {
-            if (historyIndex < commandHistory.length - 1) {
-                historyIndex++;
-                input.value = commandHistory[historyIndex] || "";
-            } else {
-                historyIndex = commandHistory.length;
-                input.value = "";
-            }
-            e.preventDefault();
-            return;
-        }
-    } catch (err) {
-        safeLogError(err);
-    }
-});
-
-/* BOOT INICIAL */
-print("progress", "Inicializando Terminal...");
-print("success", "Conectado a H40N - N.ROOT");
-print("out", "Digite 'help' para ver os comandos disponíveis.");
-
-/* captura erros globais e mostra no terminal, útil para debugar sem travar a UI */
-window.addEventListener("error", (ev) => {
-    safeLogError(ev.error || ev.message || "Erro desconhecido");
-});
-window.addEventListener("unhandledrejection", (ev) => {
-    safeLogError(ev.reason || "Promise rejeitada sem handler");
-});
+setTimeout(start, 500);
 </script>
-
 </body>
 </html>
