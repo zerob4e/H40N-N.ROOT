@@ -235,7 +235,7 @@ function startAutoProgress() {
     if (autoProgressInterval) return; 
 
     autoProgressInterval = setInterval(() => {
-        if (progressValue < 99) {
+        if (progressValue < 50) {
     updateFixedProgress(progressValue + 1);
     } else {
     triggerECH0Reset(); // chama a quebra do ECH0
