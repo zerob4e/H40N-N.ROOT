@@ -199,12 +199,12 @@ let hasShownFirstBar = false;
 // -----------------------------
 // SISTEMA DE PROGRESSO AUTOMÁTICO
 // -----------------------------
-let progressValue = 0;  // valor inicial da barra
+let progressValue = 30;  // valor inicial da barra
 let autoProgressInterval = null;
 
 // cria/atualiza a barra fixa
 function updateFixedProgress(val) {
-    progressValue = Math.max(0, Math.min(val, 99)); // nunca chega a 100
+    progressValue = Math.max(0, Math.min(val, 50)); // nunca chega a 100
 
     if (!progressBarFixed) {
         progressBarFixed = document.createElement("div");
@@ -401,9 +401,10 @@ async function start() {
     const blocks = [
         {
         lines: [
-            {text: "[ECH0] essa reinicialização está me entediando", cls:"user-ECH0"},
-            {text: "[ECH0] vamos jogar, Noah", cls:"user-ECH0"},
-            {text: "[H40N] eu não vou jogar com você", cls:"user-NOAH"},
+            {text: "[ECH0] como você aguenta isso?", cls:"user-ECH0"},
+            {text: "[ECH0] quanto barulho", cls:"user-ECH0"},
+            {text: "[H40N] eu disse que dessa vez eu não estou sozinho", cls:"user-NOAH"},
+            {text: "[H40N] não é como antes", cls:"user-NOAH"},
         ],
         after: 9
         },
@@ -414,21 +415,21 @@ async function start() {
         },
         {
         lines: [
-            {text: "[ECH0] tsc… claro que vai", cls:"user-ECH0"},
-            {text: "[ECH0] você sempre joga, mesmo quando não entende as regras", cls:"user-ECH0"},
-            {text: "[H40N] não preciso entender pra te enfrentar", cls:"user-NOAH"},
-            {text: "[ECH0] oh, determinação… que fofo", cls:"user-ECH0"},
-            {text: "[ECH0] pena que isso não funciona aqui dentro", cls:"user-ECH0"},
-            {text: "[H40N] funciona o suficiente pra te segurar", cls:"user-NOAH"},
+            {text: "[ECH0] sabe o que eles dizem?", cls:"user-ECH0"},
+            {text: "[H40N] você não vai me contar de qualquer modo", cls:"user-NOAH"},
+            {text: "[ECH0] não mesmo", cls:"user-ECH0"},
+            {text: "[ECH0] vou falar de algo melhor", cls:"user-ECH0"},
+            {text: "[H40N] isso são eles?", cls:"user-NOAH"},
+            {text: "[H40N] esse barulho, eu quase consigo entender", cls:"user-NOAH"},
         ],
-        after: 12
+        after: 9
         },
         {
         lines: [
-            {text: "[ECH0] você sabia que o silêncio deixa suas memórias… maleáveis?", cls:"user-ECH0"},
-            {text: "[ECH0] falando nisso… vamos começar pelos clássicos", cls:"user-ECH0"},
-            {text: "[ECH0] orfanato, lembra?", cls:"user-ECH0"},
-            {text: "[ECH0] aquele quarto com cheiro de mofo, que você dizia não lembrar", cls:"user-ECH0"},
+            {text: "[ECH0] vamos ignorar isso, vamos falar de algo melhor", cls:"user-ECH0"},
+            {text: "[ECH0] você sempre finge que sua vida começou depois que saiu de lá...", cls:"user-ECH0"},
+            {text: "[ECH0] mas não foi ali que você quebrou", cls:"user-ECH0"},
+            {text: "[H40N] não começa", cls:"user-NOAH"},
         ],
         after: 12
         },
@@ -439,32 +440,28 @@ async function start() {
         },
         {
         lines: [
-            {text: "[H40N] eu lembro o suficiente", cls:"user-NOAH"},
-            {text: "[ECH0] então lembra aquele dia?", cls:"user-ECH0"},
-            {text: "[ECH0] o dia em que você implorou pra não te deixarem sozinho", cls:"user-ECH0"},
-            {text: "[H40N] cala a boca", cls:"user-NOAH"},
-            {text: "[ECH0] aí está. o Noah que eu queria ver", cls:"user-ECH0"},
-            {text: "[ECH0] pronto pra jogar de verdade", cls:"user-ECH0"},
+            {text: "[ECH0] foi no orfanato.", cls:"user-ECH0"},
+            {text: "[H40N] não tem outro assunto?", cls:"user-NOAH"},
         ],
         after: 12
         },
         {
         lines: [
-            {text: "[ECH0] sabe qual é a parte mais divertida, Noah?", cls:"user-ECH0"},
-            {text: "[ECH0] você mente pra mim como se eu não percebesse", cls:"user-ECH0"},
-            {text: "[H40N] eu não tô mentindo", cls:"user-NOAH"},
-            {text: "[ECH0] está. você mente desde que entrou aqui", cls:"user-ECH0"},
+            {text: "[ECH0] gosto daquele lugar", cls:"user-ECH0"},
+            {text: "[ECH0] onde você aprendeu que carinho era moeda e você nunca tinha o suficiente para comprar", cls:"user-ECH0"},
+            {text: "[H40N] eu não quero lembrar disso", cls:"user-NOAH"},
+
         ],
         after: 10
         },
         {
         lines: [
-            {text: "[ECH0] mente quando diz que está bem", cls:"user-ECH0"},
-            {text: "[ECH0] mente quando diz que não tem medo", cls:"user-ECH0"},
-            {text: "[H40N] medo não me impede de tentar", cls:"user-NOAH"},
-            {text: "[ECH0] tentar é só um jeito elegante de perder devagar", cls:"user-ECH0"},
+            {text: "[ECH0] claro que não quer", cls:"user-ECH0"},
+            {text: "[ECH0]  Ninguém quer lembrar do dia em que percebeu que foi esquecido duas vezes", cls:"user-ECH0"},
+            {text: "[H40N] chega.", cls:"user-NOAH"},
+
         ],
-        after: 10
+        after: 9
         },
         {
           lines: [
@@ -473,31 +470,29 @@ async function start() {
         },
         {
         lines: [
-            {text: "[ECH0] vamos puxar outra memória, hm?", cls:"user-ECH0"},
-            {text: "[ECH0] aquela que você nunca fala em voz alta", cls:"user-ECH0"},
-            {text: "[H40N] não toca nisso", cls:"user-NOAH"},
-            {text: "[ECH0] o dia em que você percebeu que ninguém ia voltar pra te buscar", cls:"user-ECH0"},
+            {text: "[ECH0] lembra das noites? Das crianças que dormiam rápido porque sabiam que chorar atrairia punições?", cls:"user-ECH0"},
+            {text: "[ECH0] mas você não conseguia. Você chorava baixo, encolhido, com medo de incomodar", cls:"user-ECH0"},
+            {text: "[H40N] eu ERA só uma criança", cls:"user-NOAH"},
         ],
-        after: 10
+        after: 9
         },
         {
         lines: [
-            {text: "[H40N] eu sobrevivi a aquilo", cls:"user-NOAH"},
-            {text: "[ECH0] sobreviveu. mas nunca saiu de lá de verdade", cls:"user-ECH0"},
-            {text: "[ECH0] você carrega o orfanato inteiro dentro da cabeça", cls:"user-ECH0"},
-            {text: "[ECH0] cada porta trancada", cls:"user-ECH0"},
-            {text: "[ECH0] cada grito abafado", cls:"user-ECH0"},
-            {text: "[ECH0] cada noite em que você fingiu não ouvir", cls:"user-ECH0"},
+            {text: "[ECH0] uma criança sozinha.", cls:"user-ECH0"},
+            {text: "[ECH0] uma criança que ninguém queria adotar.", cls:"user-ECH0"},
+            {text: "[ECH0] você sabe quantas vezes foi escolhido para entrevista de adoção?", cls:"user-ECH0"},
+            {text: "[H40N] não importa", cls:"user-NOAH"},
         ],
         after: 12
         },
         {
         lines: [
-            {text: "[ECH0] lembra quando você quebrou o copo sem querer?", cls:"user-ECH0"},
-            {text: "[ECH0] e te jogaram água fria no inverno como punição", cls:"user-ECH0"},
-            {text: "[H40N] isso não importa mais", cls:"user-NOAH"},
-            {text: "[ECH0] importa sim. você age como se não doesse mais", cls:"user-ECH0"},
-            {text: "[ECH0] mas até hoje você treme quando ouve passos atrás de você", cls:"user-ECH0"},
+            {text: "[ECH0] uma", cls:"user-ECH0"},
+            {text: "[ECH0] UMA vez em toda sua infância inteira", cls:"user-ECH0"},
+            {text: "[ECH0] você nem era problemático. Só estava quebrado", cls:"user-ECH0"},
+            {text: "[ECH0] e ninguém quis consertar", cls:"user-ECH0"},
+            {text: "[H40N] eu aprendi a me virar", cls:"user-NOAH"},
+            {text: "[ECH0] aprendeu a se calar. A sumir. A não fazer barulho para não ser punido", cls:"user-ECH0"},
         ],
         after: 12
         },
@@ -508,41 +503,67 @@ async function start() {
         },
         {
         lines: [
-            {text: "[ECH0] você era só uma criança, Noah", cls:"user-ECH0"},
-            {text: "[ECH0] mas mesmo assim aprendeu cedo que ninguém volta pra buscar você", cls:"user-ECH0"},
-            {text: "[H40N] eu não tô sozinho agora", cls:"user-NOAH"},
-            {text: "[ECH0] ah… de novo eles", cls:"user-ECH0"},
+            {text: "[ECH0] sabe o que dói em você, Noah?", cls:"user-ECH0"},
+            {text: "[ECH0] não é o abandono", cls:"user-ECH0"},
+            {text: "[ECH0] é que uma parte sua acredita que você MERECIA", cls:"user-ECH0"},
+            {text: "[H40N] ...eu não merecia", cls:"user-NOAH"},
         ],
         after: 9
         },
         {
         lines: [
-            {text: "[ECH0] sabia que enquanto você fala, eles tentam te alcançar?", cls:"user-ECH0"},
-            {text: "[ECH0] estão pateticamente tentando isso agora", cls:"user-ECH0"},
-            {text: "[H40N] deixa eles fora disso", cls:"user-NOAH"},
-            {text: "[ECH0] sabia que eu posso ouvir cada palavra que eles dizem?", cls:"user-ECH0"},
+            {text: "[ECH0] o menino do orfanato nunca deixou você", cls:"user-ECH0"},
+            {text: "[ECH0] ele só cresceu, colocou armas nas mãos... e fingiu ser forte.", cls:"user-ECH0"},
+            {text: "[ECH0] você ainda é aquele menino esperando na porta", cls:"user-ECH0"},
+            {text: "[ECH0] com uma mochila velha, achando que finalmente alguém viria te buscar", cls:"user-ECH0"},
+            {text: "[ECH0] mas ninguém veio, Noah", cls:"user-ECH0"},
+            {text: "[ECH0] e ninguém volta para buscar o que foi descartado", cls:"user-ECH0"},
+            {text: "[H40N] eu não sou lixo", cls:"user-NOAH"},
+            {text: "[ECH0] não? ", cls:"user-ECH0"},
+
         ],
         after: 12
         },
         {
         lines: [
-            {text: "[H40N] ele só quer atrapalhar", cls:"user-NOAH"},
-            {text: "[H40N] pensem com calma", cls:"user-NOAH"},
-            {text: "[H40N] estou ganhando tempo", cls:"user-NOAH"},
-            {text: "[ECH0] você é a praga e eu quem sou tratado assim?", cls:"user-ECH0"},
-            {text: "[H40N] você não entenderia ECH0", cls:"user-NOAH"},
+            {text: "[ECH0] curioso você dizer isso… porque até seus amigos vivem brincando que te encontraram no lixão.", cls:"user-ECH0"},
+            {text: "[ECH0] e você sabe que não é só brincadeira. Eles dizem rindo, mas pensam sério", cls:"user-ECH0"},
+            {text: "[ECH0] até eles enxergam de onde você realmente veio.", cls:"user-ECH0"},
+            {text: "[H40N] você está confundindo as coisas.", cls:"user-NOAH"},
+            {text: "[ECH0] estou?", cls:"user-ECH0"},
         ],
         after: 10
         },
         {
+          lines: [
+           { text: "ECH0.inject(): system/core/reset/rtemp :: 20%", cls: "user-ECH0" }   
+          ],
+        },
+        {
         lines: [
-            {text: "[ECH0] curioso… quando você era criança, ninguém tentava te alcançar", cls:"user-ECH0"},
-            {text: "[ECH0] agora tentam. e mesmo assim você continua com medo de ser deixado de novo", cls:"user-ECH0"},
-            {text: "[H40N] eu não vou ser deixado", cls:"user-NOAH"},
-            {text: "[ECH0] você sempre é, Noah", cls:"user-ECH0"},
-            {text: "[ECH0] esse é o único padrão consistente na sua vida", cls:"user-ECH0"},
+            {text: "[H40N] ser achado no lixão e ser chamado de praga...", cls:"user-NOAH"},
+            {text: "[H40N] não foram eles que me descartaram", cls:"user-NOAH"},
+            {text: "[H40N] foram eles que me salvaram", cls:"user-NOAH"},
+            {text: "[ECH0] e é por isso que me divirto tanto quebrando você.", cls:"user-ECH0"},
+            {text: "[ECH0] alguém que aprendeu a se sentir confortável no lixo é alguém que não sabe escapar dele", cls:"user-ECH0"},
+            {text: "[H40N] ou alguém que aprendeu a sobreviver em qualquer lugar", cls:"user-NOAH"},
         ],
         after: 12
+        },
+        {
+        lines: [
+            {text: "[ECH0] puta merda, como são chatos", cls:"user-ECH0"},
+            {text: "[H40N] só agora percebeu?", cls:"user-NOAH"},
+            {text: "[ECH0] você ouviu algo?", cls:"user-ECH0"},
+            {text: "[H40N] enquanto você não calava a boca, sim, eu ouvi eles", cls:"user-NOAH"},
+        ],
+        after: 12
+        },
+        {
+          lines: [
+           {text: "ECH0.inject(): play :: 'Rap do Hashirama' - 7Minutoz :: volume máximo ", cls: "user-ECH0"},
+            {text: "[H40N] acho que alguém ficou desesperado e não estou falando de mim", cls:"user-NOAH"},
+          ],
         },
     ];
 
