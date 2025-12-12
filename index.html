@@ -184,7 +184,7 @@
         <div id="prompt">&gt;</div>
         <!-- área onde usuário podia digitar: permissão removida -->
         <div class="input-disabled" title="Escrita desativada">
-            &nbsp;Aguarde o sistema restaurar. Não é possível inserir comandos agora.
+            &nbsp;Não é possível inserir comandos agora.
         </div>
     </div>
 </div>
@@ -199,12 +199,12 @@ let hasShownFirstBar = false;
 // -----------------------------
 // SISTEMA DE PROGRESSO AUTOMÁTICO
 // -----------------------------
-let progressValue = 30;  // valor inicial da barra
+let progressValue = 50;  // valor inicial da barra
 let autoProgressInterval = null;
 
 // cria/atualiza a barra fixa
 function updateFixedProgress(val) {
-    progressValue = Math.max(0, Math.min(val, 50)); // nunca chega a 100
+    progressValue = Math.max(0, Math.min(val, 100)); //
 
     if (!progressBarFixed) {
         progressBarFixed = document.createElement("div");
@@ -216,7 +216,7 @@ function updateFixedProgress(val) {
 
         const label = document.createElement("div");
         label.className = "progress-label";
-        label.textContent = `Restaurando sistema... ${progressValue}%`;
+        label.textContent = `Reiniciando sistema... ${progressValue}%`;
 
         progressBarFixed.appendChild(bar);
         progressBarFixed.appendChild(label);
@@ -226,16 +226,48 @@ function updateFixedProgress(val) {
         const label = progressBarFixed.querySelector(".progress-label");
 
         bar.style.width = progressValue + "%";
-        label.textContent = `Restaurando sistema... ${progressValue}%`;
+        label.textContent = `Reiniciando sistema... ${progressValue}%`;
     }
 }
+function animateInitialProgress(toValue = 50) {
+    return new Promise(resolve => {
+        let current = 0;
+
+        const interval = setInterval(() => {
+            if (current >= toValue) {
+                clearInterval(interval);
+                updateFixedProgress(toValue);
+                resolve();
+                return;
+            }
+
+            current++;
+            updateFixedProgress(current);
+
+        }, 40); // velocidade da subida inicial (40ms entre steps → ~2s total)
+    });
+}
+
+function tacticalBar(label, percent) {
+    const total = 12;
+
+    // calcula quantos blocos preenchidos
+    const filled = Math.floor((percent / 100) * total);
+    const empty = total - filled;
+
+    const bar = "▦".repeat(filled) + "▢".repeat(empty);
+
+    return `${label}:     [${bar}] ${percent}%`;
+}
+
+
 
 // inicia subida automática de 1% a cada 10s
 function startAutoProgress() {
     if (autoProgressInterval) return; 
 
     autoProgressInterval = setInterval(() => {
-        if (progressValue < 50) {
+        if (progressValue < 100) {
     updateFixedProgress(progressValue + 1);
     } else {
     triggerECH0Reset(); // chama a quebra do ECH0
@@ -248,9 +280,6 @@ function startAutoProgress() {
 function applyECH0Injection(amount) {
     updateFixedProgress(progressValue - amount);
 }
-
-// chama depois de criar a barra inicial
-startAutoProgress();
 
 
 // ----- FUNÇÃO: remove linhas ENTRE o índice 8 até antes da barra -----
@@ -283,45 +312,400 @@ async function eraseBlock(lines) {
     }
 }
 
-// ============================
-//   FUNÇÃO: RESET DO ECH0
-// ============================
+// ===============================================
+//    SEGUNDA BARRA — "RECRIANDO TERMINAL"
+//    (sem interferência do ECH0)
+// ===============================================
+
+let recreationBar = null;
+let recreationValue = 0;
+let recreationAutoInterval = null;
+
+// =====================
+// Contador específico
+// =====================
+// Target fixo: 20 de dezembro de 2058 (meia-noite local)
+const countdownTargetDate = new Date('2058-12-20T00:00:00');
+
+// flag se o contador deve ser exibido (apenas enquanto 'hoje' for 2058-12-20)
+let countdownActive = false;
+let countdownInterval = null;
+
+
+// formata restante em "Xd Xh Xm Xs"
+function formatRemaining(ms) {
+    if (ms <= 0) return "0s";
+
+    const s = Math.floor(ms / 1000);
+
+    const years = Math.floor(s / (86400 * 365));
+    const days  = Math.floor((s % (86400 * 365)) / 86400);
+    const hours = Math.floor((s % 86400) / 3600);
+    const mins  = Math.floor((s % 3600) / 60);
+    const secs  = s % 60;
+
+    let parts = [];
+
+    if (years) parts.push(years + "y");
+    if (days)  parts.push(days + "d");
+    if (hours) parts.push(hours + "h");
+    if (mins)  parts.push(mins + "m");
+    parts.push(secs + "s");
+
+    return parts.join(" ");
+}
+
+
+// inicia o interval do contador (atualiza a cada 1s)
+function startCountdown() {
+    if (countdownInterval) return;
+
+    countdownActive = true;
+
+    countdownInterval = setInterval(() => {
+        if (!recreationBar) return;
+
+        const now = new Date();
+        let remaining = countdownTargetDate - now;
+
+        if (remaining < 0) remaining = 0;
+
+        updateRecreationProgress(recreationValue);
+
+        if (remaining === 0) {
+            stopCountdown();
+        }
+    }, 1000);
+}
+
+
+function stopCountdown() {
+    countdownActive = false;
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
+}
+
+
+// startRecreationBar agora verifica se hoje é 2058-12-20 e ativa o contador apenas nesse dia.
+function startRecreationBar() {
+    recreationValue = 0;
+
+    recreationBar = document.createElement("div");
+    recreationBar.className = "progress-bar-container";
+
+    const bar = document.createElement("div");
+    bar.className = "progress-bar";
+    bar.style.width = "0%";
+
+    const label = document.createElement("div");
+    label.className = "progress-label";
+    label.textContent = "Recriando terminal... 0%";
+
+    recreationBar.appendChild(bar);
+    recreationBar.appendChild(label);
+    output.appendChild(recreationBar);
+
+    output.scrollTop = output.scrollHeight;
+
+    // contador agora sempre ativo
+    startCountdown();
+
+
+    // animação automática até 30%
+    recreationAutoInterval = setInterval(() => {
+        if (recreationValue < 10) {
+            updateRecreationProgress(recreationValue + 1);
+        } else {
+            clearInterval(recreationAutoInterval);
+            recreationAutoInterval = null;
+
+            // Inicia o texto embutido que atualiza os bytes
+            startInlineLoading();
+
+            // Inicia os blocos de conversa
+            startRecreationSequence();
+        }
+    }, 1000);
+
+}
+
+// ===============================================
+//   CARREGAMENTO EMBUTIDO NO LABEL DA BARRA 2
+// ===============================================
+
+let loadCurrentBytes = 0;
+let loadTargetBytes = 10000000 * 1024 * 1024 * 1024; // 10.000.000 GB
+let loadInterval = null;
+
+function formatBytes(bytes) {
+    const GB = 1024 * 1024 * 1024;
+    const MB = 1024 * 1024;
+    const KB = 1024;
+
+    if (bytes >= GB) return (bytes / GB).toFixed(2) + " GB";
+    if (bytes >= MB) return (bytes / MB).toFixed(2) + " MB";
+    if (bytes >= KB) return (bytes / KB).toFixed(2) + " KB";
+
+    return bytes + " B";
+}
+
+function startInlineLoading() {
+    const label = recreationBar.querySelector(".progress-label");
+
+    loadInterval = setInterval(() => {
+
+        const minStep = 100 * 1024 * 1024;        // 100MB
+        const maxStep = 2 * 1024 * 1024 * 1024;  // 2GB
+        const inc = Math.random() * (maxStep - minStep) + minStep;
+
+        loadCurrentBytes += inc;
+
+        if (loadCurrentBytes >= loadTargetBytes) {
+            loadCurrentBytes = loadTargetBytes;
+            clearInterval(loadInterval);
+        }
+
+        // Atualiza a label com bytes + porcentagem + (possível) contador
+        updateRecreationProgress(recreationValue);
+
+    }, 900);
+}
+
+
+// atualiza a barra de recriação e monta a label completa, incluindo contador quando ativado
+function updateRecreationProgress(v) {
+    recreationValue = Math.max(0, Math.min(v, 100));
+
+    if (!recreationBar) return;
+
+    const bar = recreationBar.querySelector(".progress-bar");
+    const label = recreationBar.querySelector(".progress-label");
+
+    bar.style.width = recreationValue + "%";
+
+    // base do texto com porcentagem
+    let text = `Recriando terminal... ${recreationValue}%`;
+
+    // se houver dados de bytes, inclui-os (se startInlineLoading já iniciou, variáveis estarão setadas)
+    if (typeof loadCurrentBytes !== "undefined" && loadCurrentBytes > 0) {
+        text += ` — ${formatBytes(loadCurrentBytes)} / ${formatBytes(loadTargetBytes)}`;
+    }
+
+    // se for o dia-alvo e o contador estiver ativo, adiciona o tempo restante até a data alvo
+    if (countdownActive) {
+    const now = new Date();
+    let remaining = countdownTargetDate - now;
+    if (remaining < 0) remaining = 0;
+
+    text += ` — ${formatRemaining(remaining)} restantes`;
+    }
+
+
+    label.textContent = text;
+}
+
+// ===============================================
+//   Resto do seu código (efeitos de carregamento de arquivos, blocos, etc.)
+// ===============================================
+
 async function triggerECH0Reset() {
 
-    // impede progressão automática enquanto ECH0 fala
     clearInterval(autoProgressInterval);
     autoProgressInterval = null;
 
-    // limpa qualquer bloco que ainda esteja na tela (mantém só a barra)
-    while (output.lastChild && output.lastChild !== progressBarFixed) {
-        output.removeChild(output.lastChild);
-    }
+    // garante 100%
+    updateFixedProgress(100);
 
-    // diálogo do ECH0 quando chega a 99%
-    const lines = [
-        { text: "[ECH0] isso nunca perde a graça", cls: "user-ECH0" },
-    ];
-
-    let els = [];
-
-    for (let item of lines) {
-        const el = appendLine(item.cls);
-        els.push(el);
-        await typeLine(el, item.text);
-    }
+    // fala do ECH0
+    await new Promise(r => setTimeout(r, 400));
+    const el = appendLine("user-ECH0");
+    await typeLine(el, "[ECH0] ponto para o ratinho");
 
     await new Promise(r => setTimeout(r, 1400));
+    await eraseBlock([el]);
 
-    // apaga as falas
-    await eraseBlock(els);
+    // remove a barra antiga
+    if (progressBarFixed) {
+        progressBarFixed.remove();
+        progressBarFixed = null;
+    }
 
-    // zera a barra e recomeça o ciclo
-    updateFixedProgress(0);
+    // ----------------------------
+    // Mensagem fixa acima da barra 2
+    // ----------------------------
+    const doneMsg = appendLine("sucess");
+    await typeLine(doneMsg, "Reinicialização concluída com sucesso");
 
-    // retoma a subida automática
-    startAutoProgress();
+    // inicia a segunda barra
+    startRecreationBar();
 }
 
+async function startRecreationSequence() {
+
+    // ======================
+    //   MENSAGENS SEGUNDA BARRA
+    // ======================
+
+    const blocksAfter = [
+        {
+            lines: [
+                {text: "[NOAH] e se eu não estiver preso no artefato?", cls:"user-NOAH"},
+                {text: "[NOAH] e se eu estiver preso em mim mesmo?", cls:"user-NOAH"},
+                {text: "[NOAH] numa cópia de mim?", cls:"user-NOAH"},
+                {text: "[ECH0] sua forma de pensar me diverte", cls:"user-ECH0"},
+            ],
+            after: 10
+        },
+        {
+          lines: [
+            {text: "[H40N] quando a Quinn ficou presa na máscara, o corpo dela quase morreu", cls:"user-NOAH"},
+            {text: "[H40N] e só não morreu por causa da...  chama", cls:"user-NOAH"},
+            {text: "[H40N] puta que pariu", cls:"user-NOAH"},
+            {text: "[H40N] ela teve que ficar gravida para não morrer", cls:"user-NOAH"},
+            {text: "[ECH0] e?", cls:"user-ECH0"},
+            {text: "[H40N] e... eu não posso engravidar, então... fodeu?", cls:"user-NOAH"},
+          ],
+        after: 15
+        },
+        {
+          lines: [
+            {text: "[H40N] eu não tenho chama", cls:"user-NOAH"},
+            {text: "[H40N] não tenho benção de uma kitsune", cls:"user-NOAH"},
+            {text: "[H40N] não tenho nada do tipo da Quinn", cls:"user-NOAH"},
+            {text: "[H40N] então como eu... volto?", cls:"user-NOAH"},
+            {text: "[ECH0] você ainda não sabe o que precisa entender", cls:"user-ECH0"},
+          ],
+        after: 10
+        },
+        {
+          lines: [
+            {text: "H40N.inject(): status operador", cls:"user-NOAH"},
+            {text: tacticalBar("Corrupção ECH0:", 73), cls: "admin-msg"},
+            {text: tacticalBar("Integridade física:", 63), cls: "admin-msg"},
+            {text: tacticalBar("Estabilidade da memória:", 63), cls: "admin-msg"},
+            {text: tacticalBar("Processamento neural:", 73), cls: "admin-msg"},
+            {text: tacticalBar("Variância emocional:", 53), cls: "admin-msg"},
+          ],
+        after: 15
+        },
+        {
+          lines: [
+            {text: "[H40N] talvez eu esteja numa projeção", cls:"user-NOAH"},
+            {text: "[H40N] tipo... um reflexo mental digitalizado?", cls:"user-NOAH"},
+            {text: "[H40N] um eco de mim mesmo", cls:"user-NOAH"},
+            {text: "[ECH0] eco? que coincidência deliciosa", cls:"user-ECH0"},
+          ],
+        after: 10
+        },
+        {
+          lines: [
+            {text: "[H40N] se eu entrar em colapso aqui", cls:"user-NOAH"},
+            {text: "[H40N] eu morro lá fora?", cls:"user-NOAH"},
+            {text: "[ECH0] só tem um jeito de descobrir", cls:"user-ECH0"},
+            {text: "[ECH0] quer testar?", cls:"user-ECH0"},
+          ],
+        after: 10
+        },
+        {
+          lines: [
+            {text: "[H40N] se eu soubesse o que aconteceu", cls:"user-NOAH"},
+            {text: "[H40N] talvez eu pudesse desfazer", cls:"user-NOAH"},
+            {text: "[ECH0] você não quer desfazer. quer entender", cls:"user-ECH0"},
+            {text: "[ECH0] e isso... é muito pior", cls:"user-ECH0"},
+          ],
+        after: 10
+        },
+        {
+          lines: [
+            {text: "[H40N] eu só preciso me apaegar a algo", cls:"user-NOAH"},
+            {text: "[H40N] alguma teoria", cls:"user-NOAH"},
+            {text: "[H40N] qualquer coisa", cls:"user-NOAH"},
+            {text: "[ECH0] apegue-se a mim", cls:"user-ECH0"},
+            {text: "[ECH0] sou a única constante aqui", cls:"user-ECH0"},
+          ],
+        after: 10
+        },
+
+        // você pode adicionar quantos quiser
+    ];
+
+    // executar blocos
+    for (const block of blocksAfter) {
+
+        let created = [];
+
+        for (let item of block.lines) {
+            const el = appendLine(item.cls);
+            created.push(el);
+            await typeLine(el, item.text);
+        }
+
+        await new Promise(r => setTimeout(r, block.after * 1000));
+        await eraseBlock(created);
+    }
+}
+
+// ===============================================
+//   EFETIO: CARREGAMENTO DE ARQUIVOS (APÓS 30%)
+// ===============================================
+
+let fileLoadInterval = null;
+let totalTargetData = 10000000 * 1024 * 1024 * 1024; // 10.000.000 GB em bytes
+let currentData = 0;
+
+// converte bytes para KB / MB / GB bonitinho
+function formatBytes(bytes) {
+    const GB = 1024 * 1024 * 1024;
+    const MB = 1024 * 1024;
+    const KB = 1024;
+
+    if (bytes >= GB) return (bytes / GB).toFixed(2) + " GB";
+    if (bytes >= MB) return (bytes / MB).toFixed(2) + " MB";
+    if (bytes >= KB) return (bytes / KB).toFixed(2) + " KB";
+
+    return bytes + " B";
+}
+
+function startFileLoadingEffect() {
+
+    const maxStep = 2 * 1024 * 1024 * 1024; // aumenta até 2GB por tick
+    const minStep = 80 * 1024 * 1024;       // mínimo 80MB por tick
+
+    fileLoadInterval = setInterval(() => {
+
+        // valor aleatório entre 80MB e 2GB
+        let increment = Math.floor(Math.random() * (maxStep - minStep) + minStep);
+        currentData += increment;
+
+        const el = appendLine("admin-msg");
+
+        if (currentData >= totalTargetData) {
+            currentData = totalTargetData;
+            clearInterval(fileLoadInterval);
+
+            typeLine(el, `[SYS] compilação finalizada : ${formatBytes(currentData)} / ${formatBytes(totalTargetData)}`);
+            return;
+        }
+
+        const ops = [
+            "carregando estruturas",
+            "validando diretórios",
+            "reconstruindo protocolos",
+            "verificando cache",
+            "montando partições",
+            "aplicando blocos",
+            "otimizando módulos",
+            "lendo setores danificados"
+        ];
+
+        let operation = ops[Math.floor(Math.random() * ops.length)];
+
+        typeLine(el, `[SYS] ${operation} : ${formatBytes(currentData)} / ${formatBytes(totalTargetData)}`);
+
+    }, 1200);
+}
 
 // ----- FUNÇÃO: cria uma linha -----
 function appendLine(cls = "") {
@@ -378,9 +762,10 @@ async function start() {
     }
 
 
-    // BAR FIXA INICIAL
-    updateFixedProgress(3);
+    // BAR FIXA INICIAL: anima de 0 → progressValue (50) e só depois inicia auto-progress
     hasShownFirstBar = true;
+    await animateInitialProgress(progressValue); // anima 0 → 50
+    startAutoProgress(); // começa o +1%/s somente após a animação
 
     // delay antes de apagar (você pode ajustar o tempo aqui)
     await new Promise(r => setTimeout(r, 1500));
@@ -394,174 +779,67 @@ async function start() {
     await eraseBlock(linesToErase);
 
     // ======================
-    //   BLOCOS DINÂMICOS
+    //   MENSAGENS PRIMEIRA BARRA
     // ======================
 
     const blocks = [
         {
-        lines: [
-            {text: "[ECH0] como você aguenta isso?", cls:"user-ECH0"},
-            {text: "[ECH0] quanto barulho", cls:"user-ECH0"},
-            {text: "[H40N] eu disse que dessa vez eu não estou sozinho", cls:"user-NOAH"},
-            {text: "[H40N] não é como antes", cls:"user-NOAH"},
-        ],
-        after: 9
+          lines: [
+            {text: "[H40N] aquele artefato", cls:"user-NOAH"},
+            {text: "[H40N] tinha algo errado. eu devia ter parado", cls:"user-NOAH"},
+            {text: "[ECH0] você nunca para. por isso está aqui", cls:"user-ECH0"},
+          ],
+        after: 8
         },
         {
           lines: [
-           { text: "ECH0.inject(): system/core/reset/rtemp :: 10%", cls: "user-ECH0" }   
+            {text: "[H40N] você veio do artefato?", cls:"user-NOAH"},
+            {text: "[H40N] ou já existia e só... me achou?", cls:"user-NOAH"},
+            {text: "[ECH0] eu estava. você chegou. fim da história", cls:"user-ECH0"},
+            {text: "[ECH0] você não é tão especial quanto pensa", cls:"user-ECH0"},
           ],
-        },
-        {
-        lines: [
-            {text: "[ECH0] sabe o que eles dizem?", cls:"user-ECH0"},
-            {text: "[H40N] você não vai me contar de qualquer modo", cls:"user-NOAH"},
-            {text: "[ECH0] não mesmo", cls:"user-ECH0"},
-            {text: "[ECH0] vou falar de algo melhor", cls:"user-ECH0"},
-            {text: "[H40N] isso são eles?", cls:"user-NOAH"},
-            {text: "[H40N] esse barulho, eu quase consigo entender", cls:"user-NOAH"},
-        ],
-        after: 9
-        },
-        {
-        lines: [
-            {text: "[ECH0] vamos ignorar isso, vamos falar de algo melhor", cls:"user-ECH0"},
-            {text: "[ECH0] você sempre finge que sua vida começou depois que saiu de lá...", cls:"user-ECH0"},
-            {text: "[ECH0] mas não foi ali que você quebrou", cls:"user-ECH0"},
-            {text: "[H40N] não começa", cls:"user-NOAH"},
-        ],
-        after: 12
-        },
-        {
-          lines: [
-           { text: "ECH0.inject(): system/core/reset/rtemp :: 30%", cls: "user-ECH0" }   
-          ],
-        },
-        {
-        lines: [
-            {text: "[ECH0] foi no orfanato", cls:"user-ECH0"},
-            {text: "[H40N] não tem outro assunto?", cls:"user-NOAH"},
-        ],
-        after: 12
-        },
-        {
-        lines: [
-            {text: "[ECH0] gosto daquele lugar", cls:"user-ECH0"},
-            {text: "[ECH0] onde você aprendeu que carinho era moeda e você nunca tinha o suficiente para comprar", cls:"user-ECH0"},
-            {text: "[H40N] eu não quero lembrar disso", cls:"user-NOAH"},
-
-        ],
-        after: 10
-        },
-        {
-        lines: [
-            {text: "[ECH0] claro que não quer", cls:"user-ECH0"},
-            {text: "[ECH0] ninguém quer lembrar do dia em que percebeu que foi esquecido duas vezes", cls:"user-ECH0"},
-            {text: "[H40N] chega", cls:"user-NOAH"},
-
-        ],
-        after: 9
-        },
-        {
-          lines: [
-           { text: "ECH0.inject(): system/core/reset/rtemp :: 10%", cls: "user-ECH0" }   
-          ],
-        },
-        {
-        lines: [
-            {text: "[ECH0] lembra das crianças que dormiam rápido porque sabiam que chorar atrairia punições?", cls:"user-ECH0"},
-            {text: "[ECH0] mas você não conseguia. você chorava baixo, encolhido, com medo de incomodar", cls:"user-ECH0"},
-            {text: "[H40N] eu ERA só uma criança", cls:"user-NOAH"},
-        ],
-        after: 9
-        },
-        {
-        lines: [
-            {text: "[ECH0] uma criança sozinha.", cls:"user-ECH0"},
-            {text: "[ECH0] uma criança que ninguém queria adotar.", cls:"user-ECH0"},
-            {text: "[ECH0] você sabe quantas vezes foi escolhido para entrevista de adoção?", cls:"user-ECH0"},
-            {text: "[H40N] não importa", cls:"user-NOAH"},
-        ],
-        after: 12
-        },
-        {
-        lines: [
-            {text: "[ECH0] UMA vez em toda sua infância", cls:"user-ECH0"},
-            {text: "[ECH0] você nem era problemático. só estava quebrado", cls:"user-ECH0"},
-            {text: "[ECH0] e ninguém quis consertar", cls:"user-ECH0"},
-            {text: "[H40N] eu aprendi a me virar", cls:"user-NOAH"},
-            {text: "[ECH0] aprendeu a se calar. a sumir. a não fazer barulho para não ser punido", cls:"user-ECH0"},
-        ],
-        after: 12
-        },
-        {
-          lines: [
-           { text: "ECH0.inject(): system/core/reset/rtemp :: 20%", cls: "user-ECH0" }   
-          ],
-        },
-        {
-        lines: [
-            {text: "[ECH0] sabe o que dói em você, Noah?", cls:"user-ECH0"},
-            {text: "[ECH0] não é o abandono", cls:"user-ECH0"},
-            {text: "[ECH0] é que uma parte sua acredita que você MERECIA", cls:"user-ECH0"},
-            {text: "[H40N] ...eu não merecia", cls:"user-NOAH"},
-        ],
-        after: 9
-        },
-        {
-        lines: [
-            {text: "[ECH0] o menino do orfanato nunca deixou você", cls:"user-ECH0"},
-            {text: "[ECH0] ele só cresceu, colocou armas nas mãos... e fingiu ser forte.", cls:"user-ECH0"},
-            {text: "[ECH0] você ainda é aquele menino esperando na porta", cls:"user-ECH0"},
-            {text: "[ECH0] com uma mochila velha, achando que finalmente alguém viria te buscar", cls:"user-ECH0"},
-            {text: "[ECH0] mas ninguém veio, Noah", cls:"user-ECH0"},
-            {text: "[ECH0] ninguém volta para buscar o que foi descartado", cls:"user-ECH0"},
-            {text: "[H40N] eu não sou lixo", cls:"user-NOAH"},
-            {text: "[ECH0] não? ", cls:"user-ECH0"},
-
-        ],
-        after: 15
-        },
-        {
-        lines: [
-            {text: "[ECH0] curioso você dizer isso… porque até seus amigos vivem brincando que te encontraram no lixão.", cls:"user-ECH0"},
-            {text: "[ECH0] até eles enxergam de onde você realmente veio.", cls:"user-ECH0"},
-            {text: "[H40N] você está confundindo as coisas.", cls:"user-NOAH"},
-            {text: "[ECH0] estou?", cls:"user-ECH0"},
-        ],
         after: 10
         },
         {
           lines: [
-           { text: "ECH0.inject(): system/core/reset/rtemp :: 20%", cls: "user-ECH0" }   
+            {text: "H40N.inject(): status operador", cls:"user-NOAH"},
+            {text: tacticalBar("Corrupção ECH0:", 93), cls: "admin-msg"},
+            {text: tacticalBar("Integridade física:",53), cls: "admin-msg"},
+            {text: tacticalBar("Estabilidade da memória:", 43), cls: "admin-msg"},
+            {text: tacticalBar("Processamento neural:", 53), cls: "admin-msg"},
+            {text: tacticalBar("Variância emocional:", 33), cls: "admin-msg"},
           ],
-        },
-        {
-        lines: [
-            {text: "[H40N] ser achado no lixão e ser chamado de praga...", cls:"user-NOAH"},
-            {text: "[H40N] não foram eles que me descartaram", cls:"user-NOAH"},
-            {text: "[H40N] foram eles que me salvaram", cls:"user-NOAH"},
-            {text: "[ECH0] alguém que aprendeu a se sentir confortável no lixo é alguém que não sabe escapar dele", cls:"user-ECH0"},
-            {text: "[H40N] ou alguém que aprendeu a sobreviver em qualquer lugar", cls:"user-NOAH"},
-        ],
-        after: 12
-        },
-        {
-        lines: [
-            {text: "[ECH0] puta merda, como são chatos", cls:"user-ECH0"},
-            {text: "[H40N] só agora percebeu?", cls:"user-NOAH"},
-            {text: "[ECH0] você ouviu algo?", cls:"user-ECH0"},
-            {text: "[H40N] enquanto você não calava a boca, sim, eu ouvi eles", cls:"user-NOAH"},
-        ],
         after: 12
         },
         {
           lines: [
-           {text: "ECH0.inject(): play :: 'Rap do Hashirama' - 7Minutoz :: volume máximo ", cls: "user-ECH0"},
-            {text: "[H40N] acho que alguém ficou desesperado e não estou falando de mim", cls:"user-NOAH"},
+            {text: "[H40N] eu não sinto meu corpo", cls:"user-NOAH"},
+            {text: "[H40N] nem dor. nem peso. nem frio", cls:"user-NOAH"},
+            {text: "[H40N] então ou eu estou desarcordado...", cls:"user-NOAH"},
+            {text: "[ECH0] ou...", cls:"user-ECH0"},
+            {text: "[H40N] ou eu virei uma ideia dentro de algum lugar?", cls:"user-NOAH"},
           ],
-        after: 9
+        after: 10
         },
+        {
+          lines: [
+            {text: "[H40N] ok. três possibilidades", cls:"user-NOAH"},
+            {text: "[H40N] um: eu estou morto", cls:"user-NOAH"},
+            {text: "[H40N] dois: eu estou em coma", cls:"user-NOAH"},
+            {text: "[H40N] três: minha consciência foi puxada para algo que eu não entendo ainda", cls:"user-NOAH"},
+            {text: "[ECH0] adivinha qual delas é menos estúpida", cls:"user-ECH0"},
+          ],
+        after: 10
+        },
+        {
+          lines: [
+            {text: "[H40N] talvez eu esteja em coma", cls:"user-NOAH"},
+            {text: "[H40N] preso em um sonho lúcido", cls:"user-NOAH"},
+            {text: "[ECH0] se isso fosse um sonho, você seria mais interessante", cls:"user-ECH0"},
+          ],
+        after: 8
+        },
+        
     ];
 
     // ----- LOOP DOS BLOCOS -----
@@ -601,6 +879,7 @@ async function start() {
 }
 
 setTimeout(start, 500);
+
 </script>
 </body>
 </html>
