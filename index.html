@@ -415,7 +415,7 @@ function startRecreationBar() {
 
     // animação automática até 30%
     recreationAutoInterval = setInterval(() => {
-        if (recreationValue < 10) {
+        if (recreationValue < 30) {
             updateRecreationProgress(recreationValue + 1);
         } else {
             clearInterval(recreationAutoInterval);
@@ -502,7 +502,6 @@ function updateRecreationProgress(v) {
     text += ` — ${formatRemaining(remaining)} restantes`;
     }
 
-
     label.textContent = text;
 }
 
@@ -551,31 +550,31 @@ async function startRecreationSequence() {
     const blocksAfter = [
         {
             lines: [
-                {text: "[NOAH] e se eu não estiver preso no artefato?", cls:"user-NOAH"},
-                {text: "[NOAH] e se eu estiver preso em mim mesmo?", cls:"user-NOAH"},
-                {text: "[NOAH] numa cópia de mim?", cls:"user-NOAH"},
-                {text: "[ECH0] sua forma de pensar me diverte", cls:"user-ECH0"},
+                {text: "[ECH0] você falhou no Japão", cls:"user-ECH0"},
+                {text: "[ECH0] fugiu para a Coreia", cls:"user-ECH0"},
+                {text: "[ECH0] chegou tarde demais para salvar ela", cls:"user-ECH0"},
+                {text: "[ECH0] ela morreu sem você", cls:"user-ECH0"},
+                {text: "[H40N] eu sei onde eu estava", cls:"user-NOAH"},
+                {text: "[ECH0] sabe mesmo?", cls:"user-ECH0"},
             ],
-            after: 10
+            after: 15
         },
         {
           lines: [
-            {text: "[H40N] quando a Quinn ficou presa na máscara, o corpo dela quase morreu", cls:"user-NOAH"},
-            {text: "[H40N] e só não morreu por causa da...  chama", cls:"user-NOAH"},
-            {text: "[H40N] puta que pariu", cls:"user-NOAH"},
-            {text: "[H40N] ela teve que ficar gravida para não morrer", cls:"user-NOAH"},
-            {text: "[ECH0] e?", cls:"user-ECH0"},
-            {text: "[H40N] e... eu não posso engravidar, então... fodeu?", cls:"user-NOAH"},
+            {text: "[ECH0] eu tenho todos os horários", cls:"user-ECH0"},
+            {text: "[ECH0] tenho seus deslocamentos", cls:"user-ECH0"},
+            {text: "[ECH0] tenho o momento exato em que você poderia ter voltado", cls:"user-ECH0"},
+            {text: "[ECH0] mas escolheu não voltar", cls:"user-ECH0"},
+            {text: "[H40N] eu escolhi proteger quem ainda respirava", cls:"user-NOAH"},
           ],
         after: 15
         },
         {
           lines: [
-            {text: "[H40N] eu não tenho chama", cls:"user-NOAH"},
-            {text: "[H40N] não tenho benção de uma kitsune", cls:"user-NOAH"},
-            {text: "[H40N] não tenho nada do tipo da Quinn", cls:"user-NOAH"},
-            {text: "[H40N] então como eu... volto?", cls:"user-NOAH"},
-            {text: "[ECH0] você ainda não sabe o que precisa entender", cls:"user-ECH0"},
+            {text: "[ECH0] você deixou aquele menino na Coreia", cls:"user-ECH0"},
+            {text: "[ECH0] com uma mochila, algumas instruções", cls:"user-ECH0"},
+            {text: "[ECH0] e uma promessa que você sabia que não ia cumprir", cls:"user-ECH0"},
+            {text: "[H40N] ele precisava viver. mesmo que fosse sem mim", cls:"user-NOAH"},
           ],
         after: 10
         },
@@ -583,52 +582,44 @@ async function startRecreationSequence() {
           lines: [
             {text: "H40N.inject(): status operador", cls:"user-NOAH"},
             {text: tacticalBar("Corrupção ECH0:", 73), cls: "admin-msg"},
-            {text: tacticalBar("Integridade física:", 63), cls: "admin-msg"},
-            {text: tacticalBar("Estabilidade da memória:", 63), cls: "admin-msg"},
-            {text: tacticalBar("Processamento neural:", 73), cls: "admin-msg"},
-            {text: tacticalBar("Variância emocional:", 53), cls: "admin-msg"},
+            {text: tacticalBar("Integridade física:", 73), cls: "admin-msg"},
+            {text: tacticalBar("Estabilidade da memória:", 83), cls: "admin-msg"},
+            {text: tacticalBar("Processamento neural:", 63), cls: "admin-msg"},
+            {text: tacticalBar("Variância emocional:", 63), cls: "admin-msg"},
           ],
         after: 15
         },
         {
           lines: [
-            {text: "[H40N] talvez eu esteja numa projeção", cls:"user-NOAH"},
-            {text: "[H40N] tipo... um reflexo mental digitalizado?", cls:"user-NOAH"},
-            {text: "[H40N] um eco de mim mesmo", cls:"user-NOAH"},
-            {text: "[ECH0] eco? que coincidência deliciosa", cls:"user-ECH0"},
+            {text: "[ECH0] eu achei uma coisa", cls:"user-ECH0"},
+            {text: "[ECH0] alguém para ser mais exato", cls:"user-ECH0"},
+            {text: "[ECH0] um alguém que não teve tempo de te chamar de pai", cls:"user-ECH0"},
+            {text: "[H40N] não. você não...", cls:"user-NOAH"},
           ],
         after: 10
         },
         {
           lines: [
-            {text: "[H40N] se eu entrar em colapso aqui", cls:"user-NOAH"},
-            {text: "[H40N] eu morro lá fora?", cls:"user-NOAH"},
-            {text: "[ECH0] só tem um jeito de descobrir", cls:"user-ECH0"},
-            {text: "[ECH0] quer testar?", cls:"user-ECH0"},
+            {text: "[ECH0] mas ainda existe outro", cls:"user-ECH0"},
+            {text: "[ECH0] que ainda te chama de irmão", cls:"user-ECH0"},
+            {text: "[ECH0] aprendendo todos os dias como é bom sem você", cls:"user-ECH0"},
+            {text: "[H40N] não. você não tem direito de falar sobre isso", cls:"user-NOAH"},
           ],
         after: 10
         },
         {
           lines: [
-            {text: "[H40N] se eu soubesse o que aconteceu", cls:"user-NOAH"},
-            {text: "[H40N] talvez eu pudesse desfazer", cls:"user-NOAH"},
-            {text: "[ECH0] você não quer desfazer. quer entender", cls:"user-ECH0"},
-            {text: "[ECH0] e isso... é muito pior", cls:"user-ECH0"},
+            {text: "[H40N] você pode usar ela. pode usar minhas falhas", cls:"user-NOAH"},
+            {text: "[H40N] pode usar todos meus traumas", cls:"user-NOAH"},
+            {text: "[H40N] mas você não vai conseguir", cls:"user-NOAH"},
+            {text: "[H40N] eu fiquei. eu sobrevivi", cls:"user-NOAH"},
+            {text: "[H40N] eu prometo uma coisa ECH0", cls:"user-NOAH"},
+            {text: "[H40N] eu posso estar preso, mas você está preso comigo", cls:"user-NOAH"},
+            {text: "[H40N] e isso vai virar uma guerra", cls:"user-NOAH"},
           ],
-        after: 10
+        after: 15
         },
-        {
-          lines: [
-            {text: "[H40N] eu só preciso me apegar a algo", cls:"user-NOAH"},
-            {text: "[H40N] alguma teoria", cls:"user-NOAH"},
-            {text: "[H40N] qualquer coisa", cls:"user-NOAH"},
-            {text: "[ECH0] apegue-se a mim", cls:"user-ECH0"},
-            {text: "[ECH0] sou a única constante aqui", cls:"user-ECH0"},
-          ],
-        after: 10
-        },
-
-        // você pode adicionar quantos quiser
+   
     ];
 
     // executar blocos
@@ -739,144 +730,30 @@ function typeLine(el, text) {
 
 async function start() {
 
-    // ---------- FIXOS ----------
     const fixed = [
-    { text: "RECOVERY MODE", cls: "meta" },
-    { text: "", cls: "" },
-
-    // estes serão apagados assim que a barra aparecer
-    { text: "Calculando reinicialização do sistema", cls: "process" }
+        { text: "RECOVERY MODE", cls: "meta" },
+        { text: "", cls: "" },
+        { text: "Sistema reinicializado", cls: "sucess" },
+        { text: "Reconstrução em andamento", cls: "process" }
     ];
-
 
     let fixedEls = [];
 
     for (let item of fixed) {
-        let text = typeof item === "string" ? item : item.text;
-        let cls  = typeof item === "string" ? ""    : item.cls;
-
-        const el = appendLine(cls);
+        const el = appendLine(item.cls);
         fixedEls.push(el);
-
-        await typeLine(el, text);
+        await typeLine(el, item.text);
     }
 
-
-    // BAR FIXA INICIAL: anima de 0 → progressValue (50) e só depois inicia auto-progress
-    hasShownFirstBar = true;
-    await animateInitialProgress(progressValue); // anima 0 → 50
-    startAutoProgress(); // começa o +1%/s somente após a animação
-
-    // delay antes de apagar (você pode ajustar o tempo aqui)
     await new Promise(r => setTimeout(r, 1500));
 
-    // identificar as linhas que serão apagadas (usando animação de backspace)
-    const linesToErase = fixedEls.slice(2); 
-    // índice 0 = data, 1 = linha vazia → ficam
-    // índice 2+ = reset, iniciando, recovery 03% → apagam
-
-    // apagar com animação de backspace
+    const linesToErase = fixedEls.slice(2);
     await eraseBlock(linesToErase);
 
-    // ======================
-    //   MENSAGENS PRIMEIRA BARRA
-    // ======================
-
-    const blocks = [
-        {
-          lines: [
-            {text: "[H40N] aquele artefato", cls:"user-NOAH"},
-            {text: "[H40N] tinha algo errado. eu devia ter parado", cls:"user-NOAH"},
-            {text: "[ECH0] você nunca para. por isso está aqui", cls:"user-ECH0"},
-          ],
-        after: 8
-        },
-        {
-          lines: [
-            {text: "[H40N] você veio do artefato?", cls:"user-NOAH"},
-            {text: "[H40N] ou já existia e só... me achou?", cls:"user-NOAH"},
-            {text: "[ECH0] eu estava. você chegou. fim da história", cls:"user-ECH0"},
-            {text: "[ECH0] você não é tão especial quanto pensa", cls:"user-ECH0"},
-          ],
-        after: 10
-        },
-        {
-          lines: [
-            {text: "H40N.inject(): status operador", cls:"user-NOAH"},
-            {text: tacticalBar("Corrupção ECH0:", 93), cls: "admin-msg"},
-            {text: tacticalBar("Integridade física:",53), cls: "admin-msg"},
-            {text: tacticalBar("Estabilidade da memória:", 43), cls: "admin-msg"},
-            {text: tacticalBar("Processamento neural:", 53), cls: "admin-msg"},
-            {text: tacticalBar("Variância emocional:", 33), cls: "admin-msg"},
-          ],
-        after: 12
-        },
-        {
-          lines: [
-            {text: "[H40N] eu não sinto meu corpo", cls:"user-NOAH"},
-            {text: "[H40N] nem dor. nem peso. nem frio", cls:"user-NOAH"},
-            {text: "[H40N] então ou eu estou desarcordado...", cls:"user-NOAH"},
-            {text: "[ECH0] ou...", cls:"user-ECH0"},
-            {text: "[H40N] ou eu virei uma ideia dentro de algum lugar?", cls:"user-NOAH"},
-          ],
-        after: 10
-        },
-        {
-          lines: [
-            {text: "[H40N] ok. três possibilidades", cls:"user-NOAH"},
-            {text: "[H40N] um: eu estou morto", cls:"user-NOAH"},
-            {text: "[H40N] dois: eu estou em coma", cls:"user-NOAH"},
-            {text: "[H40N] três: minha consciência foi puxada para algo que eu não entendo ainda", cls:"user-NOAH"},
-            {text: "[ECH0] adivinha qual delas é menos estúpida", cls:"user-ECH0"},
-          ],
-        after: 10
-        },
-        {
-          lines: [
-            {text: "[H40N] talvez eu esteja em coma", cls:"user-NOAH"},
-            {text: "[H40N] preso em um sonho lúcido", cls:"user-NOAH"},
-            {text: "[ECH0] se isso fosse um sonho, você seria mais interessante", cls:"user-ECH0"},
-          ],
-        after: 8
-        },
-        
-    ];
-
-    // ----- LOOP DOS BLOCOS -----
-    for (const block of blocks) {
-
-        // limpar área abaixo da barra antes de escrever o bloco
-        while (output.lastChild && output.lastChild !== progressBarFixed) {
-            output.removeChild(output.lastChild);
-        }
-
-        // escrever bloco
-        let created = [];
-        for (let item of block.lines) {
-
-            // permite usar string ou {text, cls}
-            let text = typeof item === "string" ? item : item.text;
-            let cls  = typeof item === "string" ? ""    : item.cls;
-
-            const el = appendLine(cls);
-            created.push(el);
-
-            await typeLine(el, text);
-
-            // detecta porcentagem para atualizar barra
-            // DETECTA ECH0.inject PARA REDUZIR PORCENTAGEM
-            if (text.includes("ECH0.inject")) {
-            const inj = text.match(/::\s*(\d+)%/);
-            if (inj) applyECH0Injection(Number(inj[1]));
-            }
-        }
-
-        await new Promise(r => setTimeout(r, block.after * 1000));
-
-        // apagar bloco com animação
-        await eraseBlock(created);
-    }
+    // ⬇️ AGORA SIM
+    startRecreationBar();
 }
+
 
 setTimeout(start, 500);
 
