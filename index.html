@@ -190,573 +190,139 @@
 </div>
 
 <script>
-const output = document.getElementById('output');
-
-let progressBarFixed = null;
-let hasShownFirstBar = false;
-
-// ----- FUNÇÃO: cria barra fixa ou atualiza -----
-// -----------------------------
-// SISTEMA DE PROGRESSO AUTOMÁTICO
-// -----------------------------
-let progressValue = 50;  // valor inicial da barra
-let autoProgressInterval = null;
-
-// cria/atualiza a barra fixa
-function updateFixedProgress(val) {
-    progressValue = Math.max(0, Math.min(val, 100)); //
-
-    if (!progressBarFixed) {
-        progressBarFixed = document.createElement("div");
-        progressBarFixed.className = "progress-bar-container";
-
-        const bar = document.createElement("div");
-        bar.className = "progress-bar";
-        bar.style.width = progressValue + "%";
-
-        const label = document.createElement("div");
-        label.className = "progress-label";
-        label.textContent = `Reiniciando sistema... ${progressValue}%`;
-
-        progressBarFixed.appendChild(bar);
-        progressBarFixed.appendChild(label);
-        output.appendChild(progressBarFixed);
-    } else {
-        const bar = progressBarFixed.querySelector(".progress-bar");
-        const label = progressBarFixed.querySelector(".progress-label");
-
-        bar.style.width = progressValue + "%";
-        label.textContent = `Reiniciando sistema... ${progressValue}%`;
-    }
-}
-function animateInitialProgress(toValue = 50) {
-    return new Promise(resolve => {
-        let current = 0;
-
-        const interval = setInterval(() => {
-            if (current >= toValue) {
-                clearInterval(interval);
-                updateFixedProgress(toValue);
-                resolve();
-                return;
-            }
-
-            current++;
-            updateFixedProgress(current);
-
-        }, 40); // velocidade da subida inicial (40ms entre steps → ~2s total)
-    });
-}
-
-function tacticalBar(label, percent) {
-    const total = 12;
-
-    // calcula quantos blocos preenchidos
-    const filled = Math.floor((percent / 100) * total);
-    const empty = total - filled;
-
-    const bar = "▦".repeat(filled) + "▢".repeat(empty);
-
-    return `${label}:     [${bar}] ${percent}%`;
-}
-
-
-
-// inicia subida automática de 1% a cada 10s
-function startAutoProgress() {
-    if (autoProgressInterval) return; 
-
-    autoProgressInterval = setInterval(() => {
-        if (progressValue < 100) {
-    updateFixedProgress(progressValue + 1);
-    } else {
-    triggerECH0Reset(); // chama a quebra do ECH0
-    }
-
-    }, 2000);
-}
-
-// reduz porcentagem quando ECH0.inject aparece
-function applyECH0Injection(amount) {
-    updateFixedProgress(progressValue - amount);
-}
-
-
-// ----- FUNÇÃO: remove linhas ENTRE o índice 8 até antes da barra -----
-// (mantive essa função, não usada se você prefere backspace; deixei por segurança)
-function removeInitialLines() {
-    const children = Array.from(output.children);
-
-    // Mantém tudo até a barra fixa
-    const preserveUntil = children.indexOf(progressBarFixed);
-
-    for (let i = preserveUntil - 1; i >= 2; i--) {
-        output.removeChild(children[i]);
-    }
-}
-
-// ----- FUNÇÃO: apaga bloco com animação de backspace -----
-async function eraseBlock(lines) {
-    for (let i = lines.length - 1; i >= 0; i--) {
-        const el = lines[i];
-
-        // aplica fade-out
-        el.classList.add("fade-out");
-
-        // espera a transição terminar
-        await new Promise(resolve => setTimeout(resolve, 460));
-
-        if (el.parentElement) {
-            el.parentElement.removeChild(el);
-        }
-    }
-}
-
-// ===============================================
-//    SEGUNDA BARRA — "RECRIANDO TERMINAL"
-//    (sem interferência do ECH0)
-// ===============================================
-
-let recreationBar = null;
-let recreationValue = 0;
-let recreationAutoInterval = null;
-
-// =====================
-// Contador específico
-// =====================
-// Target fixo: 20 de dezembro de 2058 (meia-noite local)
-const countdownTargetDate = new Date('2058-12-20T00:00:00');
-
-// flag se o contador deve ser exibido (apenas enquanto 'hoje' for 2058-12-20)
-let countdownActive = false;
-let countdownInterval = null;
-
-
-// formata restante em "Xd Xh Xm Xs"
-function formatRemaining(ms) {
-    if (ms <= 0) return "0s";
-
-    const s = Math.floor(ms / 1000);
-
-    const years = Math.floor(s / (86400 * 365));
-    const days  = Math.floor((s % (86400 * 365)) / 86400);
-    const hours = Math.floor((s % 86400) / 3600);
-    const mins  = Math.floor((s % 3600) / 60);
-    const secs  = s % 60;
-
-    let parts = [];
-
-    if (years) parts.push(years + "y");
-    if (days)  parts.push(days + "d");
-    if (hours) parts.push(hours + "h");
-    if (mins)  parts.push(mins + "m");
-    parts.push(secs + "s");
-
-    return parts.join(" ");
-}
-
-
-// inicia o interval do contador (atualiza a cada 1s)
-function startCountdown() {
-    if (countdownInterval) return;
-
-    countdownActive = true;
-
-    countdownInterval = setInterval(() => {
-        if (!recreationBar) return;
-
-        const now = new Date();
-        let remaining = countdownTargetDate - now;
-
-        if (remaining < 0) remaining = 0;
-
-        updateRecreationProgress(recreationValue);
-
-        if (remaining === 0) {
-            stopCountdown();
-        }
-    }, 1000);
-}
-
-
-function stopCountdown() {
-    countdownActive = false;
-    if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
-    }
-}
-
-
-// startRecreationBar agora verifica se hoje é 2058-12-20 e ativa o contador apenas nesse dia.
-function startRecreationBar() {
-    recreationValue = 0;
-
-    recreationBar = document.createElement("div");
-    recreationBar.className = "progress-bar-container";
-
-    const bar = document.createElement("div");
-    bar.className = "progress-bar";
-    bar.style.width = "0%";
-
-    const label = document.createElement("div");
-    label.className = "progress-label";
-    label.textContent = "Recriando terminal... 0%";
-
-    recreationBar.appendChild(bar);
-    recreationBar.appendChild(label);
-    output.appendChild(recreationBar);
-
-    output.scrollTop = output.scrollHeight;
-
-    // contador agora sempre ativo
-    startCountdown();
-
-
-    // animação automática até 30%
-    recreationAutoInterval = setInterval(() => {
-        if (recreationValue < 30) {
-            updateRecreationProgress(recreationValue + 1);
-        } else {
-            clearInterval(recreationAutoInterval);
-            recreationAutoInterval = null;
-
-            // Inicia o texto embutido que atualiza os bytes
-            startInlineLoading();
-
-            // Inicia os blocos de conversa
-            startRecreationSequence();
-        }
-    }, 1000);
-
-}
-
-// ===============================================
-//   CARREGAMENTO EMBUTIDO NO LABEL DA BARRA 2
-// ===============================================
-
-let loadCurrentBytes = 0;
-let loadTargetBytes = 10000000 * 1024 * 1024 * 1024; // 10.000.000 GB
-let loadInterval = null;
-
-function formatBytes(bytes) {
-    const GB = 1024 * 1024 * 1024;
-    const MB = 1024 * 1024;
-    const KB = 1024;
-
-    if (bytes >= GB) return (bytes / GB).toFixed(2) + " GB";
-    if (bytes >= MB) return (bytes / MB).toFixed(2) + " MB";
-    if (bytes >= KB) return (bytes / KB).toFixed(2) + " KB";
-
-    return bytes + " B";
-}
-
-function startInlineLoading() {
-    const label = recreationBar.querySelector(".progress-label");
-
-    loadInterval = setInterval(() => {
-
-        const minStep = 100 * 1024 * 1024;        // 100MB
-        const maxStep = 2 * 1024 * 1024 * 1024;  // 2GB
-        const inc = Math.random() * (maxStep - minStep) + minStep;
-
-        loadCurrentBytes += inc;
-
-        if (loadCurrentBytes >= loadTargetBytes) {
-            loadCurrentBytes = loadTargetBytes;
-            clearInterval(loadInterval);
-        }
-
-        // Atualiza a label com bytes + porcentagem + (possível) contador
-        updateRecreationProgress(recreationValue);
-
-    }, 900);
-}
-
-
-// atualiza a barra de recriação e monta a label completa, incluindo contador quando ativado
-function updateRecreationProgress(v) {
-    recreationValue = Math.max(0, Math.min(v, 100));
-
-    if (!recreationBar) return;
-
-    const bar = recreationBar.querySelector(".progress-bar");
-    const label = recreationBar.querySelector(".progress-label");
-
-    bar.style.width = recreationValue + "%";
-
-    // base do texto com porcentagem
-    let text = `Recriando terminal... ${recreationValue}%`;
-
-    // se houver dados de bytes, inclui-os (se startInlineLoading já iniciou, variáveis estarão setadas)
-    if (typeof loadCurrentBytes !== "undefined" && loadCurrentBytes > 0) {
-        text += ` — ${formatBytes(loadCurrentBytes)} / ${formatBytes(loadTargetBytes)}`;
-    }
-
-    // se for o dia-alvo e o contador estiver ativo, adiciona o tempo restante até a data alvo
-    if (countdownActive) {
-    const now = new Date();
-    let remaining = countdownTargetDate - now;
-    if (remaining < 0) remaining = 0;
-
-    text += ` — ${formatRemaining(remaining)} restantes`;
-    }
-
-    label.textContent = text;
-}
-
-// ===============================================
-//   Resto do seu código (efeitos de carregamento de arquivos, blocos, etc.)
-// ===============================================
-
-async function triggerECH0Reset() {
-
-    clearInterval(autoProgressInterval);
-    autoProgressInterval = null;
-
-    // garante 100%
-    updateFixedProgress(100);
-
-    // fala do ECH0
-    await new Promise(r => setTimeout(r, 400));
-    const el = appendLine("user-ECH0");
-    await typeLine(el, "[ECH0] ponto para o ratinho");
-
-    await new Promise(r => setTimeout(r, 1400));
-    await eraseBlock([el]);
-
-    // remove a barra antiga
-    if (progressBarFixed) {
-        progressBarFixed.remove();
-        progressBarFixed = null;
-    }
-
-    // ----------------------------
-    // Mensagem fixa acima da barra 2
-    // ----------------------------
-    const doneMsg = appendLine("sucess");
-    await typeLine(doneMsg, "Reinicialização concluída com sucesso");
-
-    // inicia a segunda barra
-    startRecreationBar();
-}
-
-async function startRecreationSequence() {
-
-    // ======================
-    //   MENSAGENS SEGUNDA BARRA
-    // ======================
-
-    const blocksAfter = [
-        {
-            lines: [
-                {text: "[ECH0] você falhou no Japão", cls:"user-ECH0"},
-                {text: "[ECH0] fugiu para a Coreia", cls:"user-ECH0"},
-                {text: "[ECH0] chegou tarde demais para salvar ela", cls:"user-ECH0"},
-                {text: "[ECH0] ela morreu sem você", cls:"user-ECH0"},
-                {text: "[H40N] eu sei onde eu estava", cls:"user-NOAH"},
-                {text: "[ECH0] sabe mesmo?", cls:"user-ECH0"},
-            ],
-            after: 15
-        },
-        {
-          lines: [
-            {text: "[ECH0] eu tenho todos os horários", cls:"user-ECH0"},
-            {text: "[ECH0] tenho seus deslocamentos", cls:"user-ECH0"},
-            {text: "[ECH0] tenho o momento exato em que você poderia ter voltado", cls:"user-ECH0"},
-            {text: "[ECH0] mas escolheu não voltar", cls:"user-ECH0"},
-            {text: "[H40N] eu escolhi proteger quem ainda respirava", cls:"user-NOAH"},
-          ],
-        after: 15
-        },
-        {
-          lines: [
-            {text: "[ECH0] você deixou aquele menino na Coreia", cls:"user-ECH0"},
-            {text: "[ECH0] com uma mochila, algumas instruções", cls:"user-ECH0"},
-            {text: "[ECH0] e uma promessa que você sabia que não ia cumprir", cls:"user-ECH0"},
-            {text: "[H40N] ele precisava viver. mesmo que fosse sem mim", cls:"user-NOAH"},
-          ],
-        after: 10
-        },
-        {
-          lines: [
-            {text: "H40N.inject(): status operador", cls:"user-NOAH"},
-            {text: tacticalBar("Corrupção ECH0:", 73), cls: "admin-msg"},
-            {text: tacticalBar("Integridade física:", 73), cls: "admin-msg"},
-            {text: tacticalBar("Estabilidade da memória:", 83), cls: "admin-msg"},
-            {text: tacticalBar("Processamento neural:", 63), cls: "admin-msg"},
-            {text: tacticalBar("Variância emocional:", 63), cls: "admin-msg"},
-          ],
-        after: 15
-        },
-        {
-          lines: [
-            {text: "[ECH0] eu achei uma coisa", cls:"user-ECH0"},
-            {text: "[ECH0] alguém para ser mais exato", cls:"user-ECH0"},
-            {text: "[ECH0] um alguém que não teve tempo de te chamar de pai", cls:"user-ECH0"},
-            {text: "[H40N] não. você não...", cls:"user-NOAH"},
-          ],
-        after: 10
-        },
-        {
-          lines: [
-            {text: "[ECH0] mas ainda existe outro", cls:"user-ECH0"},
-            {text: "[ECH0] que ainda te chama de irmão", cls:"user-ECH0"},
-            {text: "[ECH0] aprendendo todos os dias como é bom sem você", cls:"user-ECH0"},
-            {text: "[H40N] não. você não tem direito de falar sobre isso", cls:"user-NOAH"},
-          ],
-        after: 10
-        },
-        {
-          lines: [
-            {text: "[H40N] você pode usar ela. pode usar minhas falhas", cls:"user-NOAH"},
-            {text: "[H40N] pode usar todos meus traumas", cls:"user-NOAH"},
-            {text: "[H40N] mas você não vai conseguir", cls:"user-NOAH"},
-            {text: "[H40N] eu fiquei. eu sobrevivi", cls:"user-NOAH"},
-            {text: "[H40N] eu prometo uma coisa ECH0", cls:"user-NOAH"},
-            {text: "[H40N] eu posso estar preso, mas você está preso comigo", cls:"user-NOAH"},
-            {text: "[H40N] e isso vai virar uma guerra", cls:"user-NOAH"},
-          ],
-        after: 15
-        },
-   
-    ];
-
-    // executar blocos
-    for (const block of blocksAfter) {
-
-        let created = [];
-
-        for (let item of block.lines) {
-            const el = appendLine(item.cls);
-            created.push(el);
-            await typeLine(el, item.text);
-        }
-
-        await new Promise(r => setTimeout(r, block.after * 1000));
-        await eraseBlock(created);
-    }
-}
-
-// ===============================================
-//   EFETIO: CARREGAMENTO DE ARQUIVOS (APÓS 30%)
-// ===============================================
-
-let fileLoadInterval = null;
-let totalTargetData = 10000000 * 1024 * 1024 * 1024; // 10.000.000 GB em bytes
-let currentData = 0;
-
-// converte bytes para KB / MB / GB bonitinho
-function formatBytes(bytes) {
-    const GB = 1024 * 1024 * 1024;
-    const MB = 1024 * 1024;
-    const KB = 1024;
-
-    if (bytes >= GB) return (bytes / GB).toFixed(2) + " GB";
-    if (bytes >= MB) return (bytes / MB).toFixed(2) + " MB";
-    if (bytes >= KB) return (bytes / KB).toFixed(2) + " KB";
-
-    return bytes + " B";
-}
-
-function startFileLoadingEffect() {
-
-    const maxStep = 2 * 1024 * 1024 * 1024; // aumenta até 2GB por tick
-    const minStep = 80 * 1024 * 1024;       // mínimo 80MB por tick
-
-    fileLoadInterval = setInterval(() => {
-
-        // valor aleatório entre 80MB e 2GB
-        let increment = Math.floor(Math.random() * (maxStep - minStep) + minStep);
-        currentData += increment;
-
-        const el = appendLine("admin-msg");
-
-        if (currentData >= totalTargetData) {
-            currentData = totalTargetData;
-            clearInterval(fileLoadInterval);
-
-            typeLine(el, `[SYS] compilação finalizada : ${formatBytes(currentData)} / ${formatBytes(totalTargetData)}`);
-            return;
-        }
-
-        const ops = [
-            "carregando estruturas",
-            "validando diretórios",
-            "reconstruindo protocolos",
-            "verificando cache",
-            "montando partições",
-            "aplicando blocos",
-            "otimizando módulos",
-            "lendo setores danificados"
-        ];
-
-        let operation = ops[Math.floor(Math.random() * ops.length)];
-
-        typeLine(el, `[SYS] ${operation} : ${formatBytes(currentData)} / ${formatBytes(totalTargetData)}`);
-
-    }, 1200);
-}
-
-// ----- FUNÇÃO: cria uma linha -----
+const output = document.getElementById("output");
+
+/* =========================
+   UTILIDADES DE TEXTO
+========================= */
 function appendLine(cls = "") {
-    const el = document.createElement('div');
-    el.className = 'line ' + cls;
+    const el = document.createElement("div");
+    el.className = "line " + cls;
     output.appendChild(el);
     output.scrollTop = output.scrollHeight;
     return el;
 }
 
-// ----- FUNÇÃO: escreve linha com efeito -----
 function typeLine(el, text) {
     return new Promise(resolve => {
-        if (typeof text !== "string") text = String(text || "");
         let i = 0;
         function step() {
             el.textContent += text[i] || "";
             i++;
-
-            if (i < text.length) setTimeout(step, 12 + Math.random() * 30);
-            else resolve();
+            if (i < text.length) {
+                setTimeout(step, 15 + Math.random() * 25);
+            } else resolve();
         }
-        if (text.length === 0) resolve();
-        else step();
+        step();
     });
 }
 
-// =======================
-//   INÍCIO DA ANIMAÇÃO
-// =======================
+async function eraseBlock(lines) {
+    for (let el of lines.reverse()) {
+        el.classList.add("fade-out");
+        await new Promise(r => setTimeout(r, 450));
+        el.remove();
+    }
+}
 
-async function start() {
+/* =========================
+   BARRA DE RECRIAÇÃO
+========================= */
+let recreationBar = null;
+let recreationValue = 0;
+let stallInterval = null;
 
-    const fixed = [
-        { text: "RECOVERY MODE", cls: "meta" },
-        { text: "", cls: "" },
-        { text: "Sistema reinicializado", cls: "sucess" },
-        { text: "Reconstrução em andamento", cls: "process" }
+function startRecreationBar() {
+    recreationBar = document.createElement("div");
+    recreationBar.className = "progress-bar-container";
+
+    const bar = document.createElement("div");
+    bar.className = "progress-bar";
+
+    const label = document.createElement("div");
+    label.className = "progress-label";
+
+    recreationBar.appendChild(bar);
+    recreationBar.appendChild(label);
+    output.appendChild(recreationBar);
+
+    let interval = setInterval(() => {
+        if (recreationValue < 80) {
+            recreationValue += 2;
+            bar.style.width = recreationValue + "%";
+            label.textContent = `Recriando terminal... ${recreationValue}%`;
+        } else {
+            clearInterval(interval);
+            bar.style.width = "80%";
+            startStallText(label);
+            startRecreationSequence(); // 🔥 agora funciona
+        }
+    }, 80);
+}
+
+function startStallText(label) {
+    const msgs = [
+        "carregando grafos",
+        "resolvendo dependências",
+        "indexando memória",
+        "validando estruturas"
+    ];
+    let i = 0, dots = 0;
+
+    stallInterval = setInterval(() => {
+        dots = (dots + 1) % 4;
+        label.textContent =
+            `Carregamento do terminal em 80% — ${msgs[i]}${".".repeat(dots)}`;
+        if (Math.random() > 0.6) i = (i + 1) % msgs.length;
+    }, 700);
+}
+
+/* =========================
+   SEQUÊNCIA NARRATIVA
+========================= */
+async function startRecreationSequence() {
+    await new Promise(r => setTimeout(r, 2500));
+
+    const blocks = [
+        [
+            ["[ECH0] você falhou no Japão", "user-ECH0"],
+            ["[ECH0] fugiu para a Coreia", "user-ECH0"],
+            ["[H40N] eu sei onde eu estava", "user-NOAH"]
+        ],
+        [
+            ["[ECH0] deixou aquele menino", "user-ECH0"],
+            ["[H40N] ele precisava viver", "user-NOAH"]
+        ],
+        [
+            ["[H40N] eu sobrevivi", "user-NOAH"],
+            ["[H40N] e isso vai virar uma guerra", "user-NOAH"]
+        ]
     ];
 
-    let fixedEls = [];
-
-    for (let item of fixed) {
-        const el = appendLine(item.cls);
-        fixedEls.push(el);
-        await typeLine(el, item.text);
+    for (let block of blocks) {
+        let els = [];
+        for (let [text, cls] of block) {
+            const el = appendLine(cls);
+            els.push(el);
+            await typeLine(el, text);
+        }
+        await new Promise(r => setTimeout(r, 4000));
+        await eraseBlock(els);
     }
+}
 
-    await new Promise(r => setTimeout(r, 1500));
-
-    const linesToErase = fixedEls.slice(2);
-    await eraseBlock(linesToErase);
-
-    // ⬇️ AGORA SIM
+/* =========================
+   INÍCIO
+========================= */
+async function start() {
+    const el = appendLine("meta");
+    await typeLine(el, "RECOVERY MODE");
+    await new Promise(r => setTimeout(r, 1200));
     startRecreationBar();
 }
 
-
 setTimeout(start, 500);
-
 </script>
+
 </body>
 </html>
