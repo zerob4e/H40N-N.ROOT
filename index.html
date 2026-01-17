@@ -167,6 +167,91 @@
     transition: opacity 0.45s ease;
     }
 
+    /* video */
+    .video-overlay {
+    position: absolute;
+    inset: 60px 40px 100px 40px;
+    background: linear-gradient(180deg, #111, #0c0c0c);
+    border: 1px solid #222;
+    border-radius: 10px;
+    box-shadow: 0 15px 40px rgba(0,0,0,.85);
+    display: flex;
+    flex-direction: column;
+    z-index: 60;
+    overflow: hidden;
+}
+
+/* header da janela de vídeo */
+.video-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #222;
+}
+
+.video-title {
+    flex: 1;
+    text-align: center;
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+/* área do vídeo */
+.video-body {
+    flex: 1;
+    position: relative;
+}
+
+.video-body video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 🔥 sem sobras */
+    display: block;
+}
+/*audio*/
+.audio-player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 0;
+    padding: 10px 14px;
+    border: 1px solid #222;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #111, #0c0c0c);
+    cursor: pointer;
+    user-select: none;
+}
+
+.audio-player:hover {
+    border-color: var(--accent);
+}
+
+.audio-icon {
+    width: 0;
+    height: 0;
+    border-left: 12px solid var(--accent);
+    border-top: 7px solid transparent;
+    border-bottom: 7px solid transparent;
+}
+
+.audio-player.active .audio-icon {
+    border-left-color: var(--prompt);
+}
+
+.audio-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.audio-player.active .audio-label {
+    color: var(--prompt);
+}
+
+
+
+
 </style>
 </head>
 <body>
@@ -192,6 +277,12 @@
 <script>
 const output = document.getElementById("output");
 
+
+let audioUnlocked = false;
+let audioPlayerShown = false;
+let globalAudio = null;
+
+
 /* =========================
    UTILIDADES DE TEXTO
 ========================= */
@@ -202,6 +293,21 @@ function appendLine(cls = "") {
     output.scrollTop = output.scrollHeight;
     return el;
 }
+/*audio*/
+function playAudio(src) {
+    if (!audioUnlocked) return;
+
+    if (globalAudio) {
+        globalAudio.pause();
+        globalAudio.currentTime = 0;
+    }
+
+    globalAudio = new Audio(src);
+    globalAudio.volume = 1;
+    globalAudio.play().catch(() => {});
+}
+/*audio*/
+
 
 function typeLine(el, text) {
     return new Promise(resolve => {
@@ -285,79 +391,128 @@ async function startRecreationSequence() {
 
     const blocks = [
         [
-            ["[ECH0] você deixou aquele menino na Coreia", "user-ECH0"],
-            ["[ECH0] com uma mochila, algumas instruções", "user-ECH0"],
-            ["[ECH0] e uma promessa que você sabia que não ia cumprir", "user-ECH0"],
-            ["[H40N] ele precisava viver. mesmo que fosse sem mim", "user-NOAH"],
+            ["[ECH0] você ainda não entendeu que NINGUÉM está vindo?", "user-ECH0"],
+            ["[ECH0] só temos eu e você", "user-ECH0"],
+            ["[H40N] não é verdade, ainda há alguém", "user-NOAH"],
+            ["[ECH0] quem? a Bea? Mimi? Quinn? Nina?", "user-ECH0"],
+            ["[ECH0] sua 'mãe'? você é uma piada Noah", "user-ECH0"],
+            ["[H40N] eu ainda preciso voltar", "user-NOAH"],
         ],
         [
-            ["[ECH0] ele te esperou", "user-ECH0"],
-            ["[ECH0] por dias", "user-ECH0"],
-            ["[ECH0] depois por semanas", "user-ECH0"],
-            ["[ECH0] depois parou de esperar", "user-ECH0"],
-            ["[H40N] esse foi o preço", "user-NOAH"],
-            ["[H40N] viver também machuca", "user-NOAH"],
+            ["[ECH0] voltar para onde Noah? voltar para quem?", "user-ECH0"],
+            ["[ECH0] não há nada para você depois daqui", "user-ECH0"],
+            ["[H40N] se não há nada pra mim, não há nada para você", "user-NOAH"],
+            ["[ECH0] está enganado Noah, existe muito para mim", "user-ECH0"],
+            ["[ECH0] e tudo que um dia você tocou, será meu", "user-ECH0"],
         ],
         [
-            ["[ECH0] eu achei uma coisa", "user-ECH0"],
-            ["[ECH0] alguém para ser mais exato", "user-ECH0"],
-            ["[ECH0] um alguém que não teve tempo, você sabe", "user-ECH0"],
-            ["[H40N] não. isso não...", "user-NOAH"],
-        ],
-                [
-            ["[ECH0] você falhou no Japão", "user-ECH0"],
-            ["[ECH0] fugiu para a Coreia", "user-ECH0"],
-            ["[H40N] eu sei onde eu estava", "user-NOAH"],
-            ["[ECH0] chegou tarde demais para salvar ela", "user-ECH0"],
-            ["[ECH0] ela morreu sem você", "user-ECH0"],
-            ["[H40N] eu sei", "user-NOAH"],
-            ["[ECH0] sabe mesmo?", "user-ECH0"]
+            ["[H40N] 3:33 o momento exato que tudo mudou", "user-NOAH"],
         ],
         [
-            ["[ECH0] eu sei todos os detalhes","user-ECH0"],
-            ["[ECH0] de todos os seus deslocamentos","user-ECH0"],
-            ["[ECH0] tenho o momento exato em que você poderia ter voltado", "user-ECH0"],
-            ["[ECH0] mas escolheu não voltar", "user-ECH0"],
-            ["[ECH0] tenho o momento exato que ela parou", "user-ECH0"],
-            ["[H40N] eu fiz uma escolha", "user-NOAH"],
-            ["[ECH0] fez e eu vou te lembrar disso, até você quebrar", "user-ECH0"],
-        ],
-        [
-            ["[H40N] você pode usar ela. pode usar minhas falhas", "user-NOAH"],
-            ["[H40N] pode usar todos os meus traumas", "user-NOAH"],
-            ["[H40N] mas você não vai conseguir", "user-NOAH"],
-            ["[H40N] eu fiquei. eu sobrevivi", "user-NOAH"],
-            ["[H40N] tenha certeza de uma coisa ECH0", "user-NOAH"],
-            ["[H40N] isso vai virar uma guerra", "user-NOAH"],
-            ["[H40N] eu posso estar preso, mas você está preso comigo", "user-NOAH"],
-        ],
-        [
-            ["[ECH0] guerra?", "user-ECH0"],
-            ["[ECH0] você chama isso de guerra?", "user-ECH0"],
-            ["[ECH0] você está parado em um loop", "user-ECH0"],
-            ["[ECH0] enquanto eu caminho por cada segundo da sua vida", "user-ECH0"],
-            ["[H40N] então por que você continua aqui?", "user-NOAH"],
-        ],
-        [
-            ["[ECH0] porque existe um intervalo", "user-ECH0"],
-            ["[ECH0] 33 segundos", "user-ECH0"],
-            ["[ECH0] um espaço que não bate com nenhum log", "user-ECH0"],
-            ["[ECH0] você fez algo ali", "user-ECH0"],
-            ["[H40N] fiz", "user-NOAH"],
-            ["[H40N] e você nunca vai conseguir reproduzir", "user-NOAH"],
+            ["[ECH0] o meu momento preferido", "user-ECH0"],
         ],
     ];
 
-    for (let block of blocks) {
-        let els = [];
-        for (let [text, cls] of block) {
-            const el = appendLine(cls);
-            els.push(el);
-            await typeLine(el, text);
-        }
-        await new Promise(r => setTimeout(r, 4000));
-        await eraseBlock(els);
+    for (let i = 0; i < blocks.length; i++) {
+    let els = [];
+
+    for (let [text, cls] of blocks[i]) {
+    const el = appendLine(cls);
+    els.push(el);
+    await typeLine(el, text);
+
+    if (text === "[H40N] 3:33 o momento exato que tudo mudou") {
+    appendAudioPlayer();}
     }
+
+
+    // 🎥 dispara o vídeo logo após o primeiro bloco terminar de escrever
+    if (i === 0) {
+        await playVideoThenAudio("assets/333.mp4");
+    }
+
+    await new Promise(r => setTimeout(r, 3000));
+    await eraseBlock(els);
+
+    }
+}
+
+function appendAudioPlayer() {
+    if (audioPlayerShown) return;
+    audioPlayerShown = true;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "audio-player";
+
+    const icon = document.createElement("div");
+    icon.className = "audio-icon";
+
+    const label = document.createElement("div");
+    label.className = "audio-label";
+    label.textContent = "ativar canal sonoro";
+
+    wrapper.appendChild(icon);
+    wrapper.appendChild(label);
+    output.appendChild(wrapper);
+    output.scrollTop = output.scrollHeight;
+
+    wrapper.addEventListener("click", () => {
+        if (audioUnlocked) return;
+
+        audioUnlocked = true;
+        wrapper.classList.add("active");
+        label.textContent = "áudio sincronizado";
+
+        playAudio("assets/artefato.mp3");
+    });
+}
+
+
+
+function playVideoThenAudio(videoSrc, audioSrc) {
+    return new Promise(resolve => {
+
+        const overlay = document.createElement("div");
+        overlay.className = "video-overlay";
+
+        const header = document.createElement("div");
+        header.className = "video-header";
+
+        header.innerHTML = `
+            <div class="dot red"></div>
+            <div class="dot yellow"></div>
+            <div class="dot green"></div>
+            <div class="video-title">MEMORY STREAM</div>
+        `;
+
+        const body = document.createElement("div");
+        body.className = "video-body";
+
+        const video = document.createElement("video");
+        video.src = videoSrc;
+        video.autoplay = true;
+        video.muted = true;        // autoplay permitido
+        video.playsInline = true;
+        video.controls = false;
+
+        body.appendChild(video);
+        overlay.appendChild(header);
+        overlay.appendChild(body);
+
+        document.querySelector(".terminal-wrapper").appendChild(overlay);
+
+        video.onended = () => {
+            overlay.remove();
+
+            if (audioSrc) {
+                const audio = new Audio(audioSrc);
+                audio.play();
+                audio.onended = () => resolve();
+            } else {
+                resolve();
+            }
+        };
+    });
 }
 
 /* =========================
@@ -366,6 +521,8 @@ async function startRecreationSequence() {
 async function start() {
     const el = appendLine("meta");
     await typeLine(el, "RECOVERY MODE");
+    await new Promise(r => setTimeout(r, 800));
+
     await new Promise(r => setTimeout(r, 1200));
     startRecreationBar();
 }
