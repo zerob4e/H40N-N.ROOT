@@ -167,91 +167,6 @@
     transition: opacity 0.45s ease;
     }
 
-    /* video */
-    .video-overlay {
-    position: absolute;
-    inset: 60px 40px 100px 40px;
-    background: linear-gradient(180deg, #111, #0c0c0c);
-    border: 1px solid #222;
-    border-radius: 10px;
-    box-shadow: 0 15px 40px rgba(0,0,0,.85);
-    display: flex;
-    flex-direction: column;
-    z-index: 60;
-    overflow: hidden;
-}
-
-/* header da janela de vídeo */
-.video-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    background: #1a1a1a;
-    border-bottom: 1px solid #222;
-}
-
-.video-title {
-    flex: 1;
-    text-align: center;
-    font-size: 0.85rem;
-    opacity: 0.8;
-}
-
-/* área do vídeo */
-.video-body {
-    flex: 1;
-    position: relative;
-}
-
-.video-body video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* 🔥 sem sobras */
-    display: block;
-}
-/*audio*/
-.audio-player {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 14px 0;
-    padding: 10px 14px;
-    border: 1px solid #222;
-    border-radius: 8px;
-    background: linear-gradient(180deg, #111, #0c0c0c);
-    cursor: pointer;
-    user-select: none;
-}
-
-.audio-player:hover {
-    border-color: var(--accent);
-}
-
-.audio-icon {
-    width: 0;
-    height: 0;
-    border-left: 12px solid var(--accent);
-    border-top: 7px solid transparent;
-    border-bottom: 7px solid transparent;
-}
-
-.audio-player.active .audio-icon {
-    border-left-color: var(--prompt);
-}
-
-.audio-label {
-    font-size: 0.85rem;
-    color: var(--muted);
-}
-
-.audio-player.active .audio-label {
-    color: var(--prompt);
-}
-
-
-
-
 </style>
 </head>
 <body>
@@ -277,12 +192,6 @@
 <script>
 const output = document.getElementById("output");
 
-
-let audioUnlocked = false;
-let audioPlayerShown = false;
-let globalAudio = null;
-
-
 /* =========================
    UTILIDADES DE TEXTO
 ========================= */
@@ -293,21 +202,6 @@ function appendLine(cls = "") {
     output.scrollTop = output.scrollHeight;
     return el;
 }
-/*audio*/
-function playAudio(src) {
-    if (!audioUnlocked) return;
-
-    if (globalAudio) {
-        globalAudio.pause();
-        globalAudio.currentTime = 0;
-    }
-
-    globalAudio = new Audio(src);
-    globalAudio.volume = 1;
-    globalAudio.play().catch(() => {});
-}
-/*audio*/
-
 
 function typeLine(el, text) {
     return new Promise(resolve => {
@@ -344,22 +238,25 @@ function startRecreationBar() {
 
     const bar = document.createElement("div");
     bar.className = "progress-bar";
-    bar.style.width = "80%"; // 🔒 trava direto em 80%
+    bar.style.width = "80%"; // 🔒 já começa travada
 
     const label = document.createElement("div");
     label.className = "progress-label";
-    label.textContent = "Carregamento do terminal em 80%";
+    label.textContent = "Carregamento do terminal em 83%";
 
     recreationBar.appendChild(bar);
     recreationBar.appendChild(label);
     output.appendChild(recreationBar);
 
-    // inicia apenas o texto falso de carregamento
+    // texto falso de processamento infinito
     startStallText(label);
+
+    // pequena pausa antes da narrativa
     setTimeout(() => {
         startRecreationSequence();
-    }, 1000);
+    }, 120);
 }
+
 
 function startStallText(label) {
     const msgs = [
@@ -386,121 +283,34 @@ async function startRecreationSequence() {
 
     const blocks = [
         [
-            ["[H40N] talvez você esteja certo", "user-NOAH"],
-            ["[H40N] talvez... ninguém esteja vindo", "user-NOAH"],
-            ["[ECH0] você entende agora?", "user-ECH0"],
-            ["[H40N] sim", "user-NOAH"],
+            ["[ECH0] você me irritou", "user-ECH0"],
+            ["[ECH0] eu vou achar a brecha", "user-ECH0"],
+            ["[H40N] boa sorte ECH0", "user-NOAH"],
         ],
         [
-            ["[ECH0] o que foi isso?", "user-ECH0"],
-            ["[H40N] você sabe o que foi", "user-NOAH"],
-        ],
-        [
-            ["[ECH0] isso não vai ficar assim", "user-ECH0"],
+            ["[H40N] não adianta você corromper a placa de audio", "user-NOAH"],
+            ["[ECH0] eu não quero mais ouvir nenhum deles", "user-ECH0"],
+            ["[H40N] você não tem mais querer ECH0", "user-NOAH"],
+            ["[H40N] enquanto houver a brecha, eu decido o que entra e sai do terminal", "user-NOAH"],
+            ["[ECH0] AAAAAAAAAAAAAAAAA", "user-ECH0"],
         ],
     ];
 
     for (let i = 0; i < blocks.length; i++) {
-    let els = [];
+        let els = [];
 
-    for (let [text, cls] of blocks[i]) {
-    const el = appendLine(cls);
-    els.push(el);
-    await typeLine(el, text);
+        for (let [text, cls] of blocks[i]) {
+            const el = appendLine(cls);
+            els.push(el);
+            await typeLine(el, text);
+            await new Promise(r => setTimeout(r, 600));
+        }
 
-    if (text === "[H40N] 3:33 o momento exato que tudo mudou") {
-    appendAudioPlayer();}
-    }
-
-
-    // 🎥 dispara o vídeo logo após o primeiro bloco terminar de escrever
-    if (i === 0) {
-        await playVideoThenAudio("assets/033.mp4");
-    }
-
-    await new Promise(r => setTimeout(r, 3000));
-    await eraseBlock(els);
-
+        await new Promise(r => setTimeout(r, 2500));
+        await eraseBlock(els);
     }
 }
 
-function appendAudioPlayer() {
-    if (audioPlayerShown) return;
-    audioPlayerShown = true;
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "audio-player";
-
-    const icon = document.createElement("div");
-    icon.className = "audio-icon";
-
-    const label = document.createElement("div");
-    label.className = "audio-label";
-    label.textContent = "ativar canal sonoro";
-
-    wrapper.appendChild(icon);
-    wrapper.appendChild(label);
-    output.appendChild(wrapper);
-    output.scrollTop = output.scrollHeight;
-
-    wrapper.addEventListener("click", () => {
-        if (audioUnlocked) return;
-
-        audioUnlocked = true;
-        wrapper.classList.add("active");
-        label.textContent = "áudio sincronizado";
-
-        playAudio("assets/artefato.mp3");
-    });
-}
-
-
-
-function playVideoThenAudio(videoSrc, audioSrc) {
-    return new Promise(resolve => {
-
-        const overlay = document.createElement("div");
-        overlay.className = "video-overlay";
-
-        const header = document.createElement("div");
-        header.className = "video-header";
-
-        header.innerHTML = `
-            <div class="dot red"></div>
-            <div class="dot yellow"></div>
-            <div class="dot green"></div>
-            <div class="video-title">MEMORY STREAM</div>
-        `;
-
-        const body = document.createElement("div");
-        body.className = "video-body";
-
-        const video = document.createElement("video");
-        video.src = videoSrc;
-        video.autoplay = true;
-        video.muted = true;        // autoplay permitido
-        video.playsInline = true;
-        video.controls = false;
-
-        body.appendChild(video);
-        overlay.appendChild(header);
-        overlay.appendChild(body);
-
-        document.querySelector(".terminal-wrapper").appendChild(overlay);
-
-        video.onended = () => {
-            overlay.remove();
-
-            if (audioSrc) {
-                const audio = new Audio(audioSrc);
-                audio.play();
-                audio.onended = () => resolve();
-            } else {
-                resolve();
-            }
-        };
-    });
-}
 
 /* =========================
    INÍCIO
@@ -513,7 +323,6 @@ async function start() {
     await new Promise(r => setTimeout(r, 1200));
     startRecreationBar();
 }
-
 setTimeout(start, 500);
 </script>
 
