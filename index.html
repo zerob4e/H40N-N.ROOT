@@ -344,26 +344,18 @@ function startRecreationBar() {
 
     const bar = document.createElement("div");
     bar.className = "progress-bar";
+    bar.style.width = "80%"; // 🔒 trava direto em 80%
 
     const label = document.createElement("div");
     label.className = "progress-label";
+    label.textContent = "Carregamento do terminal em 80%";
 
     recreationBar.appendChild(bar);
     recreationBar.appendChild(label);
     output.appendChild(recreationBar);
 
-    let interval = setInterval(() => {
-        if (recreationValue < 80) {
-            recreationValue += 2;
-            bar.style.width = recreationValue + "%";
-            label.textContent = `Recriando terminal... ${recreationValue}%`;
-        } else {
-            clearInterval(interval);
-            bar.style.width = "80%";
-            startStallText(label);
-            startRecreationSequence(); // 🔥 agora funciona
-        }
-    }, 80);
+    // inicia apenas o texto falso de carregamento
+    startStallText(label);
 }
 
 function startStallText(label) {
@@ -401,7 +393,7 @@ async function startRecreationSequence() {
             ["[H40N] sim, eu só não entendia ainda", "user-NOAH"],
         ],
         [
-            ["[ECH0] o meu momento preferido daquela noite", "user-ECH0"],
+            ["[ECH0] 3:33 o meu momento preferido daquela noite", "user-ECH0"],
         ],
     ];
 
