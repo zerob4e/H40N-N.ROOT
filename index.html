@@ -391,25 +391,17 @@ async function startRecreationSequence() {
 
     const blocks = [
         [
-            ["[ECH0] você ainda não entendeu que NINGUÉM está vindo?", "user-ECH0"],
-            ["[ECH0] só temos eu e você", "user-ECH0"],
-            ["[H40N] não é verdade, ainda há alguém", "user-NOAH"],
-            ["[ECH0] quem? a Bea? Mimi? Quinn? Nina?", "user-ECH0"],
-            ["[ECH0] sua 'mãe'? você é uma piada Noah", "user-ECH0"],
-            ["[H40N] eu ainda preciso voltar", "user-NOAH"],
+            ["[H40N] talvez você esteja certo", "user-NOAH"],
+            ["[H40N] talvez... ninguém esteja vindo", "user-NOAH"],
+            ["[H40N] para onde viriam? nem eu sei mais onde estou", "user-NOAH"],
         ],
         [
-            ["[ECH0] voltar para onde Noah? voltar para quem?", "user-ECH0"],
-            ["[ECH0] não há nada para você depois daqui", "user-ECH0"],
-            ["[H40N] se não há nada pra mim, não há nada para você", "user-NOAH"],
-            ["[ECH0] está enganado Noah, existe muito para mim", "user-ECH0"],
-            ["[ECH0] e tudo que um dia você tocou, será meu", "user-ECH0"],
+            ["[ECH0] você entende agora?", "user-ECH0"],
+            ["[ECH0] lutar é inutil", "user-ECH0"],
+            ["[H40N] sim, eu só não entendia ainda", "user-NOAH"],
         ],
         [
-            ["[H40N] 3:33 o momento exato que tudo mudou", "user-NOAH"],
-        ],
-        [
-            ["[ECH0] o meu momento preferido", "user-ECH0"],
+            ["[ECH0] o meu momento preferido daquela noite", "user-ECH0"],
         ],
     ];
 
@@ -428,7 +420,7 @@ async function startRecreationSequence() {
 
     // 🎥 dispara o vídeo logo após o primeiro bloco terminar de escrever
     if (i === 0) {
-        await playVideoThenAudio("assets/333.mp4");
+        await playVideoThenAudio("assets/033.mp4");
     }
 
     await new Promise(r => setTimeout(r, 3000));
