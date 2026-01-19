@@ -356,6 +356,9 @@ function startRecreationBar() {
 
     // inicia apenas o texto falso de carregamento
     startStallText(label);
+    setTimeout(() => {
+        startRecreationSequence();
+    }, 1000);
 }
 
 function startStallText(label) {
