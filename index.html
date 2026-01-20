@@ -238,7 +238,7 @@ function startRecreationBar() {
 
     const bar = document.createElement("div");
     bar.className = "progress-bar";
-    bar.style.width = "80%"; // 🔒 já começa travada
+    bar.style.width = "90%"; // 🔒 já começa travada
 
     const label = document.createElement("div");
     label.className = "progress-label";
@@ -270,7 +270,7 @@ function startStallText(label) {
     stallInterval = setInterval(() => {
         dots = (dots + 1) % 4;
         label.textContent =
-            `Carregamento do terminal em 80% — ${msgs[i]}${".".repeat(dots)}`;
+            `Carregamento do terminal em 90% — ${msgs[i]}${".".repeat(dots)}`;
         if (Math.random() > 0.6) i = (i + 1) % msgs.length;
     }, 700);
 }
