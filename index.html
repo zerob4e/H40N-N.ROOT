@@ -80,10 +80,10 @@ html,body{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } 
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, deleteDoc } 
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* 🔥 FIREBASE CONFIG 🔥 */
+/* FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyCy2EQHTtX-n9pBk330C5EgInJ4nHmAAGs",
   authDomain: "ech0-chat.firebaseapp.com",
@@ -99,42 +99,52 @@ const db = getFirestore(app);
 const output = document.getElementById("output");
 const input = document.getElementById("chatInput");
 
-/* DETECTAR AUTOR PELO PREFIXO */
+/* PARSE DE AUTOR */
 function parseAuthor(text) {
   const match = text.match(/^(noah|echo|system)\s*>\s*(.*)$/i);
   if (!match) return { author: "INTRUSO", text };
 
-  const authorMap = {
-    noah: "NOAH",
-    echo: "ECH0",
-    system: "SYSTEM"
-  };
-
-  return {
-    author: authorMap[match[1].toLowerCase()],
-    text: match[2]
-  };
+  const map = { noah:"NOAH", echo:"ECH0", system:"SYSTEM" };
+  return { author: map[match[1].toLowerCase()], text: match[2] };
 }
 
-/* RECEBER MENSAGENS */
+/* LISTENER SEM DUPLICAÇÃO */
 const q = query(collection(db, "messages"), orderBy("createdAt"));
 
 onSnapshot(q, (snapshot) => {
-  output.innerHTML = "";
-  snapshot.forEach(doc => {
-    const data = doc.data();
-    const line = document.createElement("div");
-    line.className = "line user-" + data.author;
-    line.textContent = data.author + "> " + data.text;
-    output.appendChild(line);
+  snapshot.docChanges().forEach(change => {
+    if (change.type === "added") {
+      if (change.doc.metadata.hasPendingWrites) return;
+
+      const data = change.doc.data();
+      const line = document.createElement("div");
+      line.className = "line user-" + data.author;
+      line.textContent = data.author + "> " + data.text;
+      output.appendChild(line);
+      output.scrollTop = output.scrollHeight;
+    }
   });
-  output.scrollTop = output.scrollHeight;
 });
 
-/* ENVIAR MENSAGEM */
+/* CLEAR */
+async function clearChat() {
+  const snap = await getDocs(collection(db, "messages"));
+  snap.forEach(doc => deleteDoc(doc.ref));
+  output.innerHTML = "";
+}
+
+/* INPUT */
 input.addEventListener("keydown", async (e) => {
   if (e.key === "Enter" && input.value.trim()) {
-    const parsed = parseAuthor(input.value.trim());
+    const raw = input.value.trim();
+
+    if (raw.toLowerCase() === "clear") {
+      await clearChat();
+      input.value = "";
+      return;
+    }
+
+    const parsed = parseAuthor(raw);
 
     await addDoc(collection(db, "messages"), {
       author: parsed.author,
