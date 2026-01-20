@@ -85,12 +85,13 @@ from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /* FIREBASE CONFIG */
 const firebaseConfig = {
-  apiKey: "AIzaSyCy2EQHTtX-n9pBk330C5EgInJ4nHmAAGs",
-  authDomain: "ech0-chat.firebaseapp.com",
-  projectId: "ech0-chat",
-  storageBucket: "ech0-chat.firebasestorage.app",
-  messagingSenderId: "146900622797",
-  appId: "1:146900622797:web:83d4aec0274f4143a7b884"
+  apiKey: "AIzaSyAiSfe0sF-N4qCPjtxSe6vDD-xK878PSIg",
+  authDomain: "ech0-chat-3d1f4.firebaseapp.com",
+  projectId: "ech0-chat-3d1f4",
+  storageBucket: "ech0-chat-3d1f4.firebasestorage.app",
+  messagingSenderId: "307385370017",
+  appId: "1:307385370017:web:adc1b52765f34bf94177e0",
+  measurementId: "G-LZ9BLCD7GV"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -100,13 +101,29 @@ const output = document.getElementById("output");
 const input = document.getElementById("chatInput");
 
 /* PARSE DE AUTOR */
-function parseAuthor(text) {
-  const match = text.match(/^(noah|echo|system)\s*>\s*(.*)$/i);
-  if (!match) return { author: "INTRUSO", text };
+function parseAuthor(input) {
+  const match = input.match(/^\s*(noah|echo|ech0|system)\s*>\s+(.+)$/i);
 
-  const map = { noah:"NOAH", echo:"ECH0", system:"SYSTEM" };
-  return { author: map[match[1].toLowerCase()], text: match[2] };
+  if (!match) {
+    return {
+      author: "INTRUSO",
+      text: input
+    };
+  }
+
+  const map = {
+    noah: "NOAH",
+    echo: "ECH0",
+    ech0: "ECH0",
+    system: "SYSTEM"
+  };
+
+  return {
+    author: map[match[1].toLowerCase()],
+    text: match[2]
+  };
 }
+
 
 /* LISTENER SEM DUPLICAÇÃO */
 const q = query(collection(db, "messages"), orderBy("createdAt"));
@@ -114,9 +131,11 @@ const q = query(collection(db, "messages"), orderBy("createdAt"));
 onSnapshot(q, (snapshot) => {
   snapshot.docChanges().forEach(change => {
     if (change.type === "added") {
-      if (change.doc.metadata.hasPendingWrites) return;
-
       const data = change.doc.data();
+
+      // evita mensagens quebradas sem timestamp
+      if (!data.text || !data.author) return;
+
       const line = document.createElement("div");
       line.className = "line user-" + data.author;
       line.textContent = data.author + "> " + data.text;
