@@ -3,320 +3,132 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>H40N - N.ROOT | TERMINAL V3.3</title>
+<title>ECHO - DOMÍNIO TEMPORAL</title>
+
 <style>
-    :root{
-        --bg:#0a0a0a;
-        --panel:#111;
-        --panel-2:#1a1a1a;
-        --text:#e5e5e5;
-        --muted:#9aa4ac;
-        --accent:#4ecbff;
-        --prompt:#00e676;
-        --user:#6ac8ff;
-        --admin:#e5e5e5;
-    }
-    html,body{
-        height:100%;
-        margin:0;
-        background:var(--bg);
-        font-family:monospace;
-        color:var(--text);
-    }
-    .terminal-wrapper{
-        width:92%;
-        max-width:980px;
-        margin:28px auto;
-        border-radius:10px;
-        overflow:hidden;
-        border:1px solid #222;
-        box-shadow:0 10px 50px rgba(0,0,0,0.7);
-        background:linear-gradient(180deg,var(--panel),#0f0f0f);
-    }
-    .terminal-header{
-        display:flex;
-        align-items:center;
-        gap:10px;
-        padding:12px;
-        background:var(--panel-2);
-        border-bottom:1px solid #222
-    }
-    .dot{
-        width:12px;
-        height:12px;
-        border-radius:50%
-    }
-    .red{background:#ff5f56}
-    .yellow{background:#ffbd2e}
-    .green{background:#27c93f}
-    
-    .terminal-title{
-        flex:1;
-        text-align:center;
-        opacity:.85;
-        font-size:0.95rem
-    }
-    #output{
-        height:68vh;
-        padding:20px;
-        overflow-y:auto;
-        white-space:pre-wrap;
-        line-height:1.35;
-        font-size:0.98rem
-    }
-    .terminal-input-area{
-        display:flex;
-        align-items:center;
-        gap:10px;
-        padding:12px;
-        background:var(--panel-2);
-        border-top:1px solid #222
-    }
-    #prompt{color:var(--prompt);font-weight:700}
-    /* fake input box (disabled) */
-    .input-disabled{
-        flex:1;
-        padding:10px 12px;
-        border-radius:6px;
-        border:1px dashed #2b2b2b;
-        background:transparent;
-        color:var(--muted);
-        font-family:monospace;
-        font-size:0.95rem;
-    }
-    .note-strong{color:#ff9aa2;font-weight:700}
-    .line{margin:6px 0}
-    .meta{color:var(--muted)}
-    .user-NOAH{color:#3ee9e9}
-    .user-ECH0{color:#ffa200}
-    .admin-msg{color:var(--admin)}
-    .process{color:#ffdb25}
-    .sucess{color:#00e676}
-
-    /* typing caret for lines being typed */
-    .typing-caret::after{
-        content: "|";
-        display:inline-block;
-        margin-left:6px;
-        animation: blink 1s steps(2,start) infinite;
-        color:var(--text);
-    }
-    @keyframes blink{50%{opacity:0}}
-    /* small emphasis */
-    .em{color:var(--accent)}
-    /* scrollbar cosmetic */
-    #output::-webkit-scrollbar{width:10px}
-    #output::-webkit-scrollbar-thumb{background:#111;border-radius:6px}
-
-    .gap {
-    height: 22px;     /* tamanho visual do salto */
-    display: block;
-    }
-
-    .progress-bar-container {
-    width: 100%;
-    background: #111;
-    border: 1px solid #222;
-    border-radius: 6px;
-    margin-top: 8px;
-    padding: 6px;
-    }
-
-    .progress-label {
-    margin-top: 4px;
-    font-size: 0.85rem;
-    color: var(--muted);
-    }
-
-    /* animação de "processando" na barra fixa */
-    .progress-bar {
-        height: 14px;
-        width: 0%;
-        background: var(--accent);
-        border-radius: 4px;
-        transition: width 1.6s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    /* efeito de brilho se movendo dentro da barra */
-    .progress-bar::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -40%;
-        width: 40%;
-        height: 100%;
-        background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(255,255,255,0.35),
-            transparent
-        );
-        animation: barShine 1.4s infinite linear;
-        mix-blend-mode: screen;
-    }
-
-    @keyframes barShine {
-        0% { left: -40%; }
-        100% { left: 140%; }
-    }
-
-    .fade-out {
-    opacity: 0;
-    transition: opacity 0.45s ease;
-    }
-
+:root{
+  --bg:#0a0a0a;
+  --panel:#111;
+  --panel-2:#1a1a1a;
+  --text:#e5e5e5;
+  --muted:#9aa4ac;
+  --prompt:#00e676;
+}
+html,body{
+  height:100%;
+  margin:0;
+  background:var(--bg);
+  font-family:monospace;
+  color:var(--text);
+}
+.terminal-wrapper{
+  width:92%;
+  max-width:980px;
+  margin:28px auto;
+  border-radius:10px;
+  overflow:hidden;
+  border:1px solid #222;
+  background:linear-gradient(180deg,var(--panel),#0f0f0f);
+}
+.terminal-header{
+  padding:12px;
+  background:var(--panel-2);
+  border-bottom:1px solid #222;
+  text-align:center;
+}
+#output{
+  height:65vh;
+  padding:20px;
+  overflow-y:auto;
+  white-space:pre-wrap;
+}
+.line{margin:6px 0}
+.user-NOAH{color:#3ee9e9}
+.user-ECH0{color:#ffa200}
+.terminal-input-area{
+  display:flex;
+  gap:10px;
+  padding:12px;
+  background:var(--panel-2);
+  border-top:1px solid #222;
+}
+#prompt{color:var(--prompt)}
+#chatInput{
+  flex:1;
+  background:transparent;
+  border:1px solid #333;
+  color:var(--text);
+  padding:8px;
+  font-family:monospace;
+}
 </style>
 </head>
+
 <body>
-<div class="terminal-wrapper" role="region" aria-label="Contingency Terminal">
-    <div class="terminal-header">
-        <div class="dot red"></div>
-        <div class="dot yellow"></div>
-        <div class="dot green"></div>
-        <div class="terminal-title">H40N - N.ROOT | TERMINAL V3.3</div>
-    </div>
+<div class="terminal-wrapper">
+  <div class="terminal-header">
+    ECHO - DOMÍNIO TEMPORAL
+  </div>
 
-    <div id="output" aria-live="polite"></div>
+  <div id="output"></div>
 
-    <div class="terminal-input-area" aria-hidden="true">
-        <div id="prompt">&gt;</div>
-        <!-- área onde usuário podia digitar: permissão removida -->
-        <div class="input-disabled" title="Escrita desativada">
-            &nbsp;Não é possível inserir comandos agora.
-        </div>
-    </div>
+  <div class="terminal-input-area">
+    <div id="prompt">&gt;</div>
+    <input id="chatInput" placeholder="Digite algo..." />
+  </div>
 </div>
 
-<script>
+<!-- FIREBASE + CHAT -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* 🔥 COLE AQUI SEU FIREBASE CONFIG 🔥 */
+const firebaseConfig = {
+  apiKey: "AIzaSyCy2EQHTtX-n9pBk330C5EgInJ4nHmAAGs",
+  authDomain: "ech0-chat.firebaseapp.com",
+  projectId: "ech0-chat",
+  storageBucket: "ech0-chat.firebasestorage.app",
+  messagingSenderId: "146900622797",
+  appId: "1:146900622797:web:83d4aec0274f4143a7b884"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 const output = document.getElementById("output");
+const input = document.getElementById("chatInput");
 
-/* =========================
-   UTILIDADES DE TEXTO
-========================= */
-function appendLine(cls = "") {
-    const el = document.createElement("div");
-    el.className = "line " + cls;
-    output.appendChild(el);
-    output.scrollTop = output.scrollHeight;
-    return el;
-}
+/* MOSTRAR MENSAGENS EM TEMPO REAL */
+const q = query(
+  collection(db, "messages"),
+  orderBy("createdAt")
+);
 
-function typeLine(el, text) {
-    return new Promise(resolve => {
-        let i = 0;
-        function step() {
-            el.textContent += text[i] || "";
-            i++;
-            if (i < text.length) {
-                setTimeout(step, 15 + Math.random() * 25);
-            } else resolve();
-        }
-        step();
+onSnapshot(q, (snapshot) => {
+  output.innerHTML = "";
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const line = document.createElement("div");
+    line.className = "line user-" + data.author;
+    line.textContent = data.author + "> " + data.text;
+    output.appendChild(line);
+  });
+  output.scrollTop = output.scrollHeight;
+});
+
+/* ENVIAR MENSAGEM */
+input.addEventListener("keydown", async (e) => {
+  if (e.key === "Enter" && input.value.trim()) {
+    await addDoc(collection(db, "messages"), {
+      author: "NOAH",
+      text: input.value,
+      createdAt: serverTimestamp()
     });
-}
-
-async function eraseBlock(lines) {
-    for (let el of lines.reverse()) {
-        el.classList.add("fade-out");
-        await new Promise(r => setTimeout(r, 450));
-        el.remove();
-    }
-}
-
-/* =========================
-   BARRA DE RECRIAÇÃO
-========================= */
-let recreationBar = null;
-let recreationValue = 0;
-let stallInterval = null;
-
-function startRecreationBar() {
-    recreationBar = document.createElement("div");
-    recreationBar.className = "progress-bar-container";
-
-    const bar = document.createElement("div");
-    bar.className = "progress-bar";
-    bar.style.width = "90%"; // 🔒 já começa travada
-
-    const label = document.createElement("div");
-    label.className = "progress-label";
-    label.textContent = "Carregamento do terminal em 90%";
-
-    recreationBar.appendChild(bar);
-    recreationBar.appendChild(label);
-    output.appendChild(recreationBar);
-
-    // texto falso de processamento infinito
-    startStallText(label);
-
-    // pequena pausa antes da narrativa
-    setTimeout(() => {
-        startRecreationSequence();
-    }, 120);
-}
-
-
-function startStallText(label) {
-    const msgs = [
-        "carregando grafos",
-        "resolvendo dependências",
-        "indexando memória",
-        "validando estruturas"
-    ];
-    let i = 0, dots = 0;
-
-    stallInterval = setInterval(() => {
-        dots = (dots + 1) % 4;
-        label.textContent =
-            `Carregamento do terminal em 90% — ${msgs[i]}${".".repeat(dots)}`;
-        if (Math.random() > 0.6) i = (i + 1) % msgs.length;
-    }, 700);
-}
-
-/* =========================
-   SEQUÊNCIA NARRATIVA
-========================= */
-async function startRecreationSequence() {
-    await new Promise(r => setTimeout(r, 2500));
-
-    const blocks = [
-        [
-            ["[ECH0] só ouvi besteiras","user-ECH0"],
-            ["[ECH0] laços e um monte de palhaçada","user-ECH0"],
-        ],
-    ];
-
-    for (let i = 0; i < blocks.length; i++) {
-        let els = [];
-
-        for (let [text, cls] of blocks[i]) {
-            const el = appendLine(cls);
-            els.push(el);
-            await typeLine(el, text);
-            await new Promise(r => setTimeout(r, 600));
-        }
-
-        await new Promise(r => setTimeout(r, 2500));
-        await eraseBlock(els);
-    }
-}
-
-
-/* =========================
-   INÍCIO
-========================= */
-async function start() {
-    const el = appendLine("meta");
-    await typeLine(el, "RECOVERY MODE");
-    await new Promise(r => setTimeout(r, 800));
-
-    await new Promise(r => setTimeout(r, 1200));
-    startRecreationBar();
-}
-setTimeout(start, 500);
+    input.value = "";
+  }
+});
 </script>
-
 </body>
 </html>
