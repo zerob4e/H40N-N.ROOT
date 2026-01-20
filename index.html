@@ -13,6 +13,7 @@
   --text:#e5e5e5;
   --prompt:#00e676;
 }
+
 html,body{
   height:100%;
   margin:0;
@@ -20,6 +21,7 @@ html,body{
   font-family:monospace;
   color:var(--text);
 }
+
 .terminal-wrapper{
   width:92%;
   max-width:980px;
@@ -28,23 +30,47 @@ html,body{
   overflow:hidden;
   border:1px solid #222;
 }
+
 .terminal-header{
+  position:relative;
   padding:12px;
   background:var(--panel-2);
   border-bottom:1px solid #222;
   text-align:center;
+  font-weight:bold;
 }
+
+.presence{
+  position:absolute;
+  right:14px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:12px;
+  letter-spacing:1px;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid;
+  opacity:0.9;
+}
+
+.presence.offline{ color:#ff4d4d; border-color:#ff4d4d; }
+.presence.noah{ color:#3ee9e9; border-color:#3ee9e9; }
+.presence.ech0{ color:#ffa200; border-color:#ffa200; }
+.presence.both{ color:#b388ff; border-color:#b388ff; }
+
 #output{
   height:60vh;
   padding:20px;
   overflow-y:auto;
   white-space:pre-wrap;
 }
-.line{margin:6px 0}
-.user-INTRUSO{color:#9aa4ac}
-.user-NOAH{color:#3ee9e9}
-.user-ECH0{color:#ffa200}
-.user-SYSTEM{color:#ff4d4d}
+
+.line{ margin:6px 0; }
+.user-INTRUSO{ color:#9aa4ac; }
+.user-NOAH{ color:#3ee9e9; }
+.user-ECH0{ color:#ffa200; }
+.user-SYSTEM{ color:#ff4d4d; }
+
 .terminal-input-area{
   display:flex;
   gap:10px;
@@ -52,7 +78,9 @@ html,body{
   background:var(--panel-2);
   border-top:1px solid #222;
 }
-#prompt{color:var(--prompt)}
+
+#prompt{ color:var(--prompt); }
+
 #chatInput{
   flex:1;
   background:transparent;
@@ -65,9 +93,12 @@ html,body{
 </head>
 
 <body>
+
 <div class="terminal-wrapper">
+
   <div class="terminal-header">
-    ECHO - DOMÍNIO TEMPORAL
+    <span>ECHO - DOMÍNIO TEMPORAL</span>
+    <span id="presenceIndicator" class="presence offline">OUTRO TEMPO</span>
   </div>
 
   <div id="output"></div>
@@ -76,104 +107,144 @@ html,body{
     <div id="prompt">&gt;</div>
     <input id="chatInput" placeholder="Digite algo..." />
   </div>
+
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, deleteDoc } 
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } 
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* FIREBASE CONFIG */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyAiSfe0sF-N4qCPjtxSe6vDD-xK878PSIg",
   authDomain: "ech0-chat-3d1f4.firebaseapp.com",
   projectId: "ech0-chat-3d1f4",
   storageBucket: "ech0-chat-3d1f4.firebasestorage.app",
   messagingSenderId: "307385370017",
-  appId: "1:307385370017:web:adc1b52765f34bf94177e0",
-  measurementId: "G-LZ9BLCD7GV"
+  appId: "1:307385370017:web:adc1b52765f34bf94177e0"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+/* ELEMENTOS */
 const output = document.getElementById("output");
 const input = document.getElementById("chatInput");
+const presenceIndicator = document.getElementById("presenceIndicator");
 
-/* PARSE DE AUTOR */
-function parseAuthor(input) {
-  const match = input.match(/^\s*(noah|echo|ech0|system)\s*>\s+(.+)$/i);
+/* ESTADO */
+let currentUser = "INTRUSO";
+let operatorsOnline = { NOAH:false, ECH0:false };
 
-  if (!match) {
-    return {
-      author: "INTRUSO",
-      text: input
-    };
+/* UI PRESENÇA */
+function updatePresenceUI(){
+  presenceIndicator.className = "presence";
+
+  if (operatorsOnline.NOAH && operatorsOnline.ECH0) {
+    presenceIndicator.textContent = "NOAH + ECH0";
+    presenceIndicator.classList.add("both");
+    return;
+  }
+  if (operatorsOnline.NOAH) {
+    presenceIndicator.textContent = "NOAH ONLINE";
+    presenceIndicator.classList.add("noah");
+    return;
+  }
+  if (operatorsOnline.ECH0) {
+    presenceIndicator.textContent = "ECH0 ONLINE";
+    presenceIndicator.classList.add("ech0");
+    return;
   }
 
-  const map = {
-    noah: "NOAH",
-    echo: "ECH0",
-    ech0: "ECH0",
-    system: "SYSTEM"
-  };
-
-  return {
-    author: map[match[1].toLowerCase()],
-    text: match[2]
-  };
+  presenceIndicator.textContent = "OUTRO TEMPO";
+  presenceIndicator.classList.add("offline");
 }
 
+updatePresenceUI();
 
-/* LISTENER SEM DUPLICAÇÃO */
+/* FIRESTORE LISTENER */
 const q = query(collection(db, "messages"), orderBy("createdAt"));
 
 onSnapshot(q, (snapshot) => {
   snapshot.docChanges().forEach(change => {
-    if (change.type === "added") {
-      const data = change.doc.data();
+    if (change.type !== "added") return;
 
-      // evita mensagens quebradas sem timestamp
-      if (!data.text || !data.author) return;
+    const data = change.doc.data();
+    if (!data.text || !data.author) return;
 
-      const line = document.createElement("div");
-      line.className = "line user-" + data.author;
-      line.textContent = data.author + "> " + data.text;
-      output.appendChild(line);
-      output.scrollTop = output.scrollHeight;
+    if (data.type === "CLEAR") {
+      output.innerHTML = "";
+      return;
     }
+
+    if (data.type === "LOGIN") {
+      operatorsOnline[data.author] = true;
+      updatePresenceUI();
+    }
+
+    if (data.type === "LOGOUT") {
+      operatorsOnline[data.author] = false;
+      updatePresenceUI();
+    }
+
+    const line = document.createElement("div");
+    line.className = "line user-" + data.author;
+    line.textContent = data.author + "> " + data.text;
+    output.appendChild(line);
+    output.scrollTop = output.scrollHeight;
   });
 });
 
-/* CLEAR */
-async function clearChat() {
-  const snap = await getDocs(collection(db, "messages"));
-  snap.forEach(doc => deleteDoc(doc.ref));
-  output.innerHTML = "";
+/* COMANDOS */
+function handleCommand(raw){
+  const cmd = raw.toLowerCase();
+
+  if (cmd === "login noah") {
+    currentUser = "NOAH";
+    return { author:"NOAH", text:"Oi", type:"LOGIN" };
+  }
+
+  if (cmd === "login echo" || cmd === "login ech0") {
+    currentUser = "ECH0";
+    return { author:"ECH0", text:"Olá, intruso", type:"LOGIN" };
+  }
+
+  if (cmd === "logout") {
+    const oldUser = currentUser;
+    currentUser = "INTRUSO";
+
+    return {
+      author: oldUser,
+      text: "Logout falhou",
+      type: "LOGOUT"
+    };
+  }
+
+  if (cmd === "clear") {
+    return { author:"SYSTEM", text:"Limpeza de dados", type:"CLEAR" };
+  }
+
+  return null;
 }
 
 /* INPUT */
 input.addEventListener("keydown", async (e) => {
-  if (e.key === "Enter" && input.value.trim()) {
-    const raw = input.value.trim();
+  if (e.key !== "Enter" || !input.value.trim()) return;
 
-    if (raw.toLowerCase() === "clear") {
-      await clearChat();
-      input.value = "";
-      return;
-    }
+  const raw = input.value.trim();
+  const command = handleCommand(raw);
 
-    const parsed = parseAuthor(raw);
+  await addDoc(collection(db, "messages"), {
+    author: command ? command.author : currentUser,
+    text: command ? command.text : raw,
+    type: command?.type || null,
+    createdAt: serverTimestamp()
+  });
 
-    await addDoc(collection(db, "messages"), {
-      author: parsed.author,
-      text: parsed.text,
-      createdAt: serverTimestamp()
-    });
-
-    input.value = "";
-  }
+  input.value = "";
 });
 </script>
+
 </body>
 </html>
