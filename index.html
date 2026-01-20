@@ -98,7 +98,7 @@ html,body{
 
   <div class="terminal-header">
     <span>ECHO - DOMÍNIO TEMPORAL</span>
-    <span id="presenceIndicator" class="presence offline">OUTRO TEMPO</span>
+    <span id="presenceIndicator" class="presence offline">OPERADORES OFF</span>
   </div>
 
   <div id="output"></div>
@@ -157,7 +157,7 @@ function updatePresenceUI(){
     return;
   }
 
-  presenceIndicator.textContent = "OUTRO TEMPO";
+  presenceIndicator.textContent = "OPERADORES OFF";
   presenceIndicator.classList.add("offline");
 }
 
