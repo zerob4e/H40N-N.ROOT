@@ -11,7 +11,6 @@
   --panel:#111;
   --panel-2:#1a1a1a;
   --text:#e5e5e5;
-  --muted:#9aa4ac;
   --prompt:#00e676;
 }
 html,body{
@@ -28,7 +27,6 @@ html,body{
   border-radius:10px;
   overflow:hidden;
   border:1px solid #222;
-  background:linear-gradient(180deg,var(--panel),#0f0f0f);
 }
 .terminal-header{
   padding:12px;
@@ -37,14 +35,16 @@ html,body{
   text-align:center;
 }
 #output{
-  height:65vh;
+  height:60vh;
   padding:20px;
   overflow-y:auto;
   white-space:pre-wrap;
 }
 .line{margin:6px 0}
+.user-INTRUSO{color:#9aa4ac}
 .user-NOAH{color:#3ee9e9}
 .user-ECH0{color:#ffa200}
+.user-SYSTEM{color:#ff4d4d}
 .terminal-input-area{
   display:flex;
   gap:10px;
@@ -78,13 +78,12 @@ html,body{
   </div>
 </div>
 
-<!-- FIREBASE + CHAT -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } 
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* 🔥 COLE AQUI SEU FIREBASE CONFIG 🔥 */
+/* 🔥 FIREBASE CONFIG 🔥 */
 const firebaseConfig = {
   apiKey: "AIzaSyCy2EQHTtX-n9pBk330C5EgInJ4nHmAAGs",
   authDomain: "ech0-chat.firebaseapp.com",
@@ -100,11 +99,25 @@ const db = getFirestore(app);
 const output = document.getElementById("output");
 const input = document.getElementById("chatInput");
 
-/* MOSTRAR MENSAGENS EM TEMPO REAL */
-const q = query(
-  collection(db, "messages"),
-  orderBy("createdAt")
-);
+/* DETECTAR AUTOR PELO PREFIXO */
+function parseAuthor(text) {
+  const match = text.match(/^(noah|echo|system)\s*>\s*(.*)$/i);
+  if (!match) return { author: "INTRUSO", text };
+
+  const authorMap = {
+    noah: "NOAH",
+    echo: "ECH0",
+    system: "SYSTEM"
+  };
+
+  return {
+    author: authorMap[match[1].toLowerCase()],
+    text: match[2]
+  };
+}
+
+/* RECEBER MENSAGENS */
+const q = query(collection(db, "messages"), orderBy("createdAt"));
 
 onSnapshot(q, (snapshot) => {
   output.innerHTML = "";
@@ -121,11 +134,14 @@ onSnapshot(q, (snapshot) => {
 /* ENVIAR MENSAGEM */
 input.addEventListener("keydown", async (e) => {
   if (e.key === "Enter" && input.value.trim()) {
+    const parsed = parseAuthor(input.value.trim());
+
     await addDoc(collection(db, "messages"), {
-      author: "NOAH",
-      text: input.value,
+      author: parsed.author,
+      text: parsed.text,
       createdAt: serverTimestamp()
     });
+
     input.value = "";
   }
 });
