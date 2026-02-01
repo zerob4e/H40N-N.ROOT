@@ -171,7 +171,7 @@ onSnapshot(q, (snapshot) => {
     if (change.type !== "added") return;
 
     const data = change.doc.data();
-    if (!data.text || !data.author) return;
+    if (!data.author || (data.type === null && !data.text)) return;
 
     if (data.type === "CLEAR") {
       output.innerHTML = "";
