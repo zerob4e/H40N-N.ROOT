@@ -202,12 +202,12 @@ function handleCommand(raw){
 
   if (cmd === "login noah") {
     currentUser = "NOAH";
-    return { type:"LOGIN" };
+    return { author:"NOAH", text:"", type:"LOGIN" };
   }
 
   if (cmd === "login echo" || cmd === "login ech0") {
     currentUser = "ECH0";
-    return { author:"ECH0", type:"LOGIN" };
+    return { author:"ECH0", text:"", type:"LOGIN" };
   }
 
   if (cmd === "logout") {
