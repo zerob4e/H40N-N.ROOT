@@ -112,8 +112,15 @@ html,body{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } 
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /* FIREBASE */
 const firebaseConfig = {
@@ -137,7 +144,7 @@ const presenceIndicator = document.getElementById("presenceIndicator");
 let currentUser = "INTRUSO";
 let operatorsOnline = { NOAH:false, ECH0:false };
 
-/* UI PRESENÇA */
+/* PRESENÇA */
 function updatePresenceUI(){
   presenceIndicator.className = "presence";
 
@@ -163,43 +170,42 @@ function updatePresenceUI(){
 
 updatePresenceUI();
 
-/* FIRESTORE LISTENER */
+/* LISTENER */
 const q = query(collection(db, "messages"), orderBy("createdAt"));
 
 onSnapshot(q, (snapshot) => {
   snapshot.docChanges().forEach(change => {
     if (change.type !== "added") return;
 
-const data = change.doc.data();
-if (!data.author) return;
+    const data = change.doc.data();
+    if (!data.author) return;
 
-/* EVENTOS DE PRESENÇA — NÃO RENDERIZAM */
-if (data.type === "LOGIN") {
-  operatorsOnline[data.author] = true;
-  updatePresenceUI();
-  return;
-}
+    if (data.type === "LOGIN") {
+      operatorsOnline[data.author] = true;
+      updatePresenceUI();
+      return;
+    }
 
-if (data.type === "LOGOUT") {
-  operatorsOnline[data.author] = false;
-  updatePresenceUI();
-  return;
-}
+    if (data.type === "LOGOUT") {
+      operatorsOnline[data.author] = false;
+      updatePresenceUI();
+      return;
+    }
 
-/* EVENTOS DE SISTEMA */
-if (data.type === "CLEAR") {
-  output.innerHTML = "";
-  return;
-}
+    if (data.type === "CLEAR") {
+      output.innerHTML = "";
+      return;
+    }
 
-/* MENSAGENS NORMAIS */
-if (!data.text) return;
+    if (!data.text) return;
 
-const line = document.createElement("div");
-line.className = "line user-" + data.author;
-line.textContent = data.author + "> " + data.text;
-output.appendChild(line);
-output.scrollTop = output.scrollHeight;
+    const line = document.createElement("div");
+    line.className = "line user-" + data.author;
+    line.textContent = data.author + "> " + data.text;
+    output.appendChild(line);
+    output.scrollTop = output.scrollHeight;
+  });
+});
 
 /* COMANDOS */
 function handleCommand(raw){
@@ -218,16 +224,11 @@ function handleCommand(raw){
   if (cmd === "logout") {
     const oldUser = currentUser;
     currentUser = "INTRUSO";
-
-    return {
-      author: oldUser,
-      text: "Operador desconectado",
-      type: "LOGOUT"
-    };
+    return { author: oldUser, text:"Operador desconectado", type:"LOGOUT" };
   }
 
   if (cmd === "clear") {
-    return { author:"SYSTEM", text:"Limpeza de dados", type:"CLEAR" };
+    return { author:"SYSTEM", text:"", type:"CLEAR" };
   }
 
   return null;
@@ -250,6 +251,5 @@ input.addEventListener("keydown", async (e) => {
   input.value = "";
 });
 </script>
-
 </body>
 </html>
