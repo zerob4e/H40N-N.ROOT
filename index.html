@@ -170,31 +170,36 @@ onSnapshot(q, (snapshot) => {
   snapshot.docChanges().forEach(change => {
     if (change.type !== "added") return;
 
-    const data = change.doc.data();
-    if (!data.author || (data.type === null && !data.text)) return;
+const data = change.doc.data();
+if (!data.author) return;
 
-    if (data.type === "CLEAR") {
-      output.innerHTML = "";
-      return;
-    }
+/* EVENTOS DE PRESENÇA — NÃO RENDERIZAM */
+if (data.type === "LOGIN") {
+  operatorsOnline[data.author] = true;
+  updatePresenceUI();
+  return;
+}
 
-    if (data.type === "LOGIN") {
-      operatorsOnline[data.author] = true;
-      updatePresenceUI();
-    }
+if (data.type === "LOGOUT") {
+  operatorsOnline[data.author] = false;
+  updatePresenceUI();
+  return;
+}
 
-    if (data.type === "LOGOUT") {
-      operatorsOnline[data.author] = false;
-      updatePresenceUI();
-    }
+/* EVENTOS DE SISTEMA */
+if (data.type === "CLEAR") {
+  output.innerHTML = "";
+  return;
+}
 
-    const line = document.createElement("div");
-    line.className = "line user-" + data.author;
-    line.textContent = data.author + "> " + data.text;
-    output.appendChild(line);
-    output.scrollTop = output.scrollHeight;
-  });
-});
+/* MENSAGENS NORMAIS */
+if (!data.text) return;
+
+const line = document.createElement("div");
+line.className = "line user-" + data.author;
+line.textContent = data.author + "> " + data.text;
+output.appendChild(line);
+output.scrollTop = output.scrollHeight;
 
 /* COMANDOS */
 function handleCommand(raw){
